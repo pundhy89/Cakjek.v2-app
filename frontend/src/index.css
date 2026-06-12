@@ -93,6 +93,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     @apply backdrop-blur-xl bg-white/85 dark:bg-zinc-900/85 border-t border-black/5 dark:border-white/10;
 }
 
+/* Keep Leaflet map below modals/nav */
+.leaflet-container { z-index: 0; }
+.leaflet-pane, .leaflet-top, .leaflet-bottom { z-index: 1; }
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;

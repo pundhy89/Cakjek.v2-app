@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ServiceHeader } from "../components/ServiceHeader";
 import { Field } from "../components/RideForm";
+import AddressMapPicker from "../components/AddressMapPicker";
 import { api, formatIDR } from "../lib/api";
 import { useApp } from "../context/AppContext";
 import { t } from "../lib/i18n";
@@ -11,7 +12,7 @@ const CategoryPage = ({ category, title, color, service }) => {
   const { lang } = useApp();
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState({});
-  const [form, setForm] = useState({ name: "", phone: "", address: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", addressCoords: null });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,13 +42,14 @@ const CategoryPage = ({ category, title, color, service }) => {
     }
     setLoading(true);
     const lines = cartItems.map((i) => `- ${i.name} x${cart[i.id]} = ${formatIDR(i.price * cart[i.id])}`).join("\n");
-    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nAlamat: ${form.address}\n\nPesanan:\n${lines}\n\nTotal: ${formatIDR(total)}`;
+    const pin = form.addressCoords ? `\nPin Alamat: https://maps.google.com/?q=${form.addressCoords.lat},${form.addressCoords.lng}` : "";
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nAlamat: ${form.address}${pin}\n\nPesanan:\n${lines}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,
         customer_name: form.name,
         customer_phone: form.phone,
-        details: { address: form.address, items: cartItems.map((i) => ({ id: i.id, name: i.name, qty: cart[i.id], price: i.price })) },
+        details: { address: form.address, address_coords: form.addressCoords, items: cartItems.map((i) => ({ id: i.id, name: i.name, qty: cart[i.id], price: i.price })) },
         total,
         message,
       });
@@ -89,7 +91,13 @@ const CategoryPage = ({ category, title, color, service }) => {
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-5 shadow-md space-y-3 mt-4">
           <Field label={t(lang, "name")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} testid="input-name" />
           <Field label={t(lang, "phone")} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} testid="input-phone" />
-          <Field label={t(lang, "address")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} testid="input-address" />
+          <AddressMapPicker
+            label={t(lang, "address")}
+            value={form.address}
+            coords={form.addressCoords}
+            onChange={(addr, c) => setForm((f) => ({ ...f, address: addr, addressCoords: c }))}
+            testid="address-picker"
+          />
 
           <div className="flex items-center justify-between pt-3 border-t border-border">
             <span className="text-sm text-muted-foreground">{t(lang, "total")}</span>
