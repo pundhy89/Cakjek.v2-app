@@ -23,6 +23,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminBanners from "./pages/admin/AdminBanners";
+import AdminMerchants from "./pages/admin/AdminMerchants";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="food" element={<AdminMenu category="food" />} />
+            <Route path="merchants" element={<AdminMerchants />} />
             <Route path="mart" element={<AdminMenu category="mart" />} />
             <Route path="cakpay" element={<AdminMenu category="cakpay" />} />
             <Route path="tariff" element={<AdminTariff />} />

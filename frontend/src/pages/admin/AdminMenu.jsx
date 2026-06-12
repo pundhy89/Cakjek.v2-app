@@ -5,16 +5,20 @@ import { t } from "../../lib/i18n";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 
-const empty = { name: "", price: 0, description: "", image: "", active: true };
+const empty = { name: "", price: 0, description: "", image: "", active: true, merchant_id: null };
 
 export default function AdminMenu({ category }) {
   const { lang } = useApp();
   const [items, setItems] = useState([]);
+  const [merchants, setMerchants] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
 
   const load = () => api.get(`/admin/menu/${category}`).then((r) => setItems(r.data));
-  useEffect(() => { load(); }, [category]);
+  useEffect(() => {
+    load();
+    if (category === "food") api.get("/merchants").then((r) => setMerchants(r.data));
+  }, [category]);
 
   const openNew = () => { setEditing("new"); setForm(empty); };
   const openEdit = (it) => { setEditing(it.id); setForm({ ...it }); };
@@ -100,6 +104,20 @@ export default function AdminMenu({ category }) {
               <FF label={t(lang, "price")} type="number" v={form.price} on={(v) => setForm({ ...form, price: v })} testid="form-price" />
               <FF label={t(lang, "description")} v={form.description} on={(v) => setForm({ ...form, description: v })} testid="form-desc" />
               <FF label={t(lang, "image_url")} v={form.image} on={(v) => setForm({ ...form, image: v })} testid="form-image" />
+              {category === "food" && (
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">Warung</span>
+                  <select
+                    data-testid="form-merchant"
+                    value={form.merchant_id || ""}
+                    onChange={(e) => setForm({ ...form, merchant_id: e.target.value || null })}
+                    className="mt-1 w-full bg-secondary text-foreground rounded-xl px-3 py-2 text-sm outline-none"
+                  >
+                    <option value="">-- Pilih Warung --</option>
+                    {merchants.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
+                </label>
+              )}
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> {t(lang, "active")}
               </label>
