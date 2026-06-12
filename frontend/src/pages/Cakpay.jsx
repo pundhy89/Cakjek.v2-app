@@ -23,7 +23,7 @@ export default function Cakpay() {
       return;
     }
     setLoading(true);
-    const message = `Halo Admin CakApp,\nSaya ingin *${t(lang, "cakpay")}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nNomor tujuan / ID: ${form.target_number}\nPaket: ${selected.name}\n\nTotal: ${formatIDR(selected.price)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "cakpay")}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nNomor tujuan / ID: ${form.target_number}\nPaket: ${selected.name}\n\nTotal: ${formatIDR(selected.price)}`;
     try {
       const r = await api.post("/orders", {
         service: "cakpay",

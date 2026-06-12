@@ -41,7 +41,7 @@ const CategoryPage = ({ category, title, color, service }) => {
     }
     setLoading(true);
     const lines = cartItems.map((i) => `- ${i.name} x${cart[i.id]} = ${formatIDR(i.price * cart[i.id])}`).join("\n");
-    const message = `Halo Admin CakApp,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nAlamat: ${form.address}\n\nPesanan:\n${lines}\n\nTotal: ${formatIDR(total)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nAlamat: ${form.address}\n\nPesanan:\n${lines}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,

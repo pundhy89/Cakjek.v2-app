@@ -24,7 +24,7 @@ export default function Caksend() {
       return;
     }
     setLoading(true);
-    const message = `Halo Admin CakApp,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nNo HP: ${form.phone}\nAlamat jemput: ${form.pickup}\n\nPenerima: ${form.receiver}\nAlamat tujuan: ${form.destination}\nJarak: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nNo HP: ${form.phone}\nAlamat jemput: ${form.pickup}\n\nPenerima: ${form.receiver}\nAlamat tujuan: ${form.destination}\nJarak: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service: "caksend",

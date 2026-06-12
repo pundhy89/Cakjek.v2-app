@@ -38,7 +38,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-2 mb-8">
             <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-heading font-bold">C</div>
             <div>
-              <p className="font-heading font-bold">CakApp</p>
+              <p className="font-heading font-bold">CakJek</p>
               <p className="text-[10px] text-zinc-400 uppercase tracking-wider">{t(lang, "admin")}</p>
             </div>
           </div>

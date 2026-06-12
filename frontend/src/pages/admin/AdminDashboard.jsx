@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   return (
     <div data-testid="admin-dashboard">
       <h1 className="font-heading text-3xl font-bold">{t(lang, "dashboard")}</h1>
-      <p className="text-muted-foreground text-sm mt-1">Ringkasan performa CakApp hari ini & bulan ini.</p>
+      <p className="text-muted-foreground text-sm mt-1">Ringkasan performa CakJek hari ini & bulan ini.</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <Stat label="Pesanan Hari Ini" value={report?.count ?? "-"} accent="from-blue-500 to-blue-600" />
         <Stat label="Pendapatan Hari Ini" value={report ? formatIDR(report.total) : "-"} accent="from-emerald-500 to-emerald-600" />

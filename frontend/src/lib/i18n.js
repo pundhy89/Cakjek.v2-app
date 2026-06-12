@@ -1,6 +1,6 @@
 export const translations = {
   id: {
-    appName: "CakApp",
+    appName: "CakJek",
     tagline: "Layanan harianmu, dalam satu app",
     services: "Layanan",
     home: "Beranda",
@@ -84,7 +84,7 @@ export const translations = {
     your_local_super_app: "Super app lokal kamu",
   },
   en: {
-    appName: "CakApp",
+    appName: "CakJek",
     tagline: "Your daily needs, in one app",
     services: "Services",
     home: "Home",

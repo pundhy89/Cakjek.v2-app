@@ -22,7 +22,7 @@ const RideForm = ({ service, title, color, lang }) => {
       return;
     }
     setLoading(true);
-    const message = `Halo Admin CakApp,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nJemput: ${form.pickup}\nTujuan: ${form.destination}\nJarak: ${form.distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nJemput: ${form.pickup}\nTujuan: ${form.destination}\nJarak: ${form.distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,

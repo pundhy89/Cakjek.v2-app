@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 export default function AdminSettings() {
   const { lang } = useApp();
-  const [form, setForm] = useState({ whatsapp_number: "", app_name: "CakApp" });
+  const [form, setForm] = useState({ whatsapp_number: "", app_name: "CakJek" });
 
   useEffect(() => {
-    api.get("/settings").then((r) => setForm({ whatsapp_number: r.data.whatsapp_number, app_name: r.data.app_name || "CakApp" }));
+    api.get("/settings").then((r) => setForm({ whatsapp_number: r.data.whatsapp_number, app_name: r.data.app_name || "CakJek" }));
   }, []);
 
   const save = async () => {

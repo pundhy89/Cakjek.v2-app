@@ -62,11 +62,11 @@ class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "settings"
     whatsapp_number: str = "6285233962821"
-    app_name: str = "CakApp"
+    app_name: str = "CakJek"
 
 class SettingsUpdate(BaseModel):
     whatsapp_number: str
-    app_name: Optional[str] = "CakApp"
+    app_name: Optional[str] = "CakJek"
 
 class OrderCreate(BaseModel):
     service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay
@@ -258,7 +258,7 @@ async def reports_monthly(year: int, month: int, _: str = Depends(require_admin)
 
 @api_router.get("/")
 async def root():
-    return {"message": "CakApp API"}
+    return {"message": "CakJek API"}
 
 # ---------- Seed ----------
 async def seed():
