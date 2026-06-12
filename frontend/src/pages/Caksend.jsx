@@ -47,12 +47,12 @@ export default function Caksend() {
     setLoading(true);
     const pCoord = form.pickupCoords ? `\nPin Jemput: https://maps.google.com/?q=${form.pickupCoords.lat},${form.pickupCoords.lng}` : "";
     const dCoord = form.destinationCoords ? `\nPin Tujuan: https://maps.google.com/?q=${form.destinationCoords.lat},${form.destinationCoords.lng}` : "";
-    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nNo HP: ${form.phone}\nAlamat jemput: ${form.pickup}${pCoord}\n\nPenerima: ${form.receiver}\nAlamat tujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nAlamat jemput: ${form.pickup}${pCoord}\n\nPenerima: ${form.receiver}\nAlamat tujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service: "caksend",
         customer_name: form.name,
-        customer_phone: form.phone,
+        customer_phone: "",
         details: form,
         total,
         message,
@@ -74,7 +74,6 @@ export default function Caksend() {
       <div className="px-5 -mt-6">
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-5 shadow-md space-y-3">
           <Field label={t(lang, "name")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} testid="input-name" />
-          <Field label={t(lang, "phone")} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} testid="input-phone" />
 
           <AddressMapPicker
             label={t(lang, "pickup")}

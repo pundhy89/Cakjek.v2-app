@@ -39,19 +39,19 @@ const RideForm = ({ service, title, color, lang }) => {
   const total = tariff ? Number(tariff.base_fare) + Number(tariff.per_km) * Number(form.distance || 0) : 0;
 
   const submit = async () => {
-    if (!form.name || !form.phone || !form.pickup || !form.destination) {
+    if (!form.name || !form.pickup || !form.destination) {
       toast.error(t(lang, "fill_required"));
       return;
     }
     setLoading(true);
     const pCoord = form.pickupCoords ? `\nPin Jemput: https://maps.google.com/?q=${form.pickupCoords.lat},${form.pickupCoords.lng}` : "";
     const dCoord = form.destinationCoords ? `\nPin Tujuan: https://maps.google.com/?q=${form.destinationCoords.lat},${form.destinationCoords.lng}` : "";
-    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nJemput: ${form.pickup}${pCoord}\nTujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nJemput: ${form.pickup}${pCoord}\nTujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,
         customer_name: form.name,
-        customer_phone: form.phone,
+        customer_phone: "",
         details: {
           pickup: form.pickup, pickup_coords: form.pickupCoords,
           destination: form.destination, destination_coords: form.destinationCoords,
@@ -77,7 +77,6 @@ const RideForm = ({ service, title, color, lang }) => {
       <div className="px-5 -mt-6">
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-5 shadow-md space-y-3">
           <Field label={t(lang, "name")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} testid="input-name" />
-          <Field label={t(lang, "phone")} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} testid="input-phone" />
 
           <AddressMapPicker
             label={t(lang, "pickup")}

@@ -1,228 +1,93 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Bike, Car, Utensils, Package, ShoppingBag, Wallet,
-  Shield, Smartphone, MapPin, Sparkles, PartyPopper, Heart,
-} from "lucide-react";
+import { Bike, Car, Utensils, Package, ShoppingBag, Wallet, Shield, Search, Bell, Percent, Plus, Send } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { t } from "../lib/i18n";
 import BannerCarousel from "../components/BannerCarousel";
 
 const services = [
-  { key: "cakride", path: "/cakride", icon: Bike, gradient: "from-emerald-400 via-emerald-500 to-teal-600", ring: "ring-emerald-300" },
-  { key: "cakcar", path: "/cakcar", icon: Car, gradient: "from-sky-400 via-blue-500 to-indigo-600", ring: "ring-sky-300" },
-  { key: "cakfood", path: "/cakfood", icon: Utensils, gradient: "from-amber-400 via-orange-500 to-rose-500", ring: "ring-orange-300" },
-  { key: "caksend", path: "/caksend", icon: Package, gradient: "from-violet-400 via-purple-500 to-fuchsia-600", ring: "ring-violet-300" },
-  { key: "cakmart", path: "/cakmart", icon: ShoppingBag, gradient: "from-pink-400 via-rose-500 to-red-500", ring: "ring-pink-300" },
-  { key: "cakpay", path: "/cakpay", icon: Wallet, gradient: "from-cyan-400 via-teal-500 to-emerald-500", ring: "ring-cyan-300" },
+  { key: "cakride", path: "/cakride", icon: Bike, color: "text-blue-500", badge: "Diskon" },
+  { key: "cakcar", path: "/cakcar", icon: Car, color: "text-blue-500" },
+  { key: "cakfood", path: "/cakfood", icon: Utensils, color: "text-rose-500" },
+  { key: "cakmart", path: "/cakmart", icon: ShoppingBag, color: "text-teal-500" },
+  { key: "caksend", path: "/caksend", icon: Package, color: "text-violet-500", badge: "Baru" },
+  { key: "cakpay", path: "/cakpay", icon: Wallet, color: "text-orange-500" },
 ];
-
-// Animated floating decorations in header
-const FloatingDeco = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-    <motion.div
-      className="absolute -top-2 right-6 text-yellow-300"
-      animate={{ y: [0, -10, 0], rotate: [0, 8, -6, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <Sparkles size={28} fill="currentColor" />
-    </motion.div>
-    <motion.div
-      className="absolute top-16 right-20 text-white/80"
-      animate={{ y: [0, -8, 0] }}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-    >
-      <Smartphone size={22} />
-    </motion.div>
-    <motion.div
-      className="absolute top-8 left-6 text-pink-200"
-      animate={{ rotate: [0, 12, -8, 0], scale: [1, 1.1, 1] }}
-      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <Heart size={20} fill="currentColor" />
-    </motion.div>
-    <motion.div
-      className="absolute bottom-6 left-10 text-emerald-200"
-      animate={{ y: [0, 6, 0], rotate: [0, -10, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-    >
-      <MapPin size={24} fill="currentColor" />
-    </motion.div>
-    <motion.div
-      className="absolute -bottom-3 right-12 text-amber-200"
-      animate={{ y: [0, -6, 0], rotate: [0, 15, 0] }}
-      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-    >
-      <PartyPopper size={26} />
-    </motion.div>
-    {/* big translucent blobs */}
-    <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-pink-400/40 blur-2xl" />
-    <div className="absolute -bottom-16 -left-12 w-52 h-52 rounded-full bg-amber-300/30 blur-3xl" />
-    <div className="absolute top-10 left-1/2 w-32 h-32 rounded-full bg-cyan-300/30 blur-2xl" />
-  </div>
-);
-
-const tileVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.92 },
-  show: (i) => ({
-    opacity: 1, y: 0, scale: 1,
-    transition: { delay: i * 0.06, type: "spring", stiffness: 220, damping: 18 },
-  }),
-};
 
 export default function Home() {
   const { lang } = useApp();
   return (
-    <div data-testid="home-page" className="min-h-screen">
-      {/* HEADER */}
-      <div className="relative bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700 text-white px-6 pt-10 pb-20 rounded-b-[2.5rem] overflow-hidden">
-        <FloatingDeco />
-        <div className="relative flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: [0, -8, 8, 0] }}
-                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                className="w-9 h-9 rounded-2xl bg-white text-purple-600 grid place-items-center font-heading font-extrabold shadow-lg shadow-fuchsia-900/30"
-              >
-                C
-              </motion.div>
-              <p className="text-sm font-extrabold uppercase tracking-[0.25em] text-pink-100">CakJek</p>
-            </div>
-            <h1 className="font-heading text-3xl font-extrabold mt-3 leading-tight drop-shadow-sm">
-              Halo, <span className="text-yellow-200">Cak!</span> 👋
-            </h1>
-            <p className="text-pink-100/90 text-sm mt-1 max-w-[16rem]">
-              {t(lang, "your_local_super_app")} — {t(lang, "tagline")}
-            </p>
-          </motion.div>
-          <Link
-            to="/admin/login"
-            data-testid="admin-link"
-            title={t(lang, "admin")}
-            className="relative p-2.5 rounded-full bg-white/15 backdrop-blur hover:bg-white/25 transition active:scale-95"
-          >
-            <Shield size={18} />
-          </Link>
+    <div data-testid="home-page" className="min-h-screen bg-slate-50 dark:bg-zinc-950">
+      {/* search bar */}
+      <div className="px-4 pt-5 pb-2 flex items-center gap-2 bg-white dark:bg-zinc-900">
+        <div className="flex-1 flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 rounded-full px-4 py-2.5">
+          <input data-testid="home-search" placeholder="Cari makanan atau layanan..." className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          <div className="w-8 h-8 rounded-full bg-blue-500 grid place-items-center"><Search size={16} className="text-white" /></div>
         </div>
-
-        {/* mini stats */}
-        <div className="relative mt-6 flex gap-2">
-          {[
-            { icon: Smartphone, label: "100% online" },
-            { icon: MapPin, label: "Sekitarmu" },
-            { icon: Sparkles, label: "Promo tiap hari" },
-          ].map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + i * 0.1 }}
-                className="flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-semibold"
-              >
-                <Icon size={12} /> {s.label}
-              </motion.div>
-            );
-          })}
-        </div>
+        <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 grid place-items-center"><Percent size={18} className="text-blue-500" /></button>
+        <Link to="/admin/login" data-testid="admin-link" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 grid place-items-center"><Shield size={18} /></Link>
       </div>
 
-      {/* SERVICES */}
-      <div className="px-5 -mt-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, type: "spring", stiffness: 180, damping: 20 }}
-          className="bg-card rounded-[2rem] shadow-xl shadow-purple-900/10 border border-black/5 dark:border-white/10 p-5"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-base font-extrabold text-foreground">
-              {t(lang, "services")}
-            </h2>
-            <motion.span
-              animate={{ rotate: [0, 12, -12, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="text-amber-500"
-            >
-              <Sparkles size={16} />
-            </motion.span>
+      {/* banner carousel */}
+      <div className="px-4">
+        <BannerCarousel />
+      </div>
+
+      {/* CakPay wallet card */}
+      <div className="px-4 mt-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative rounded-3xl bg-gradient-to-r from-blue-500 to-blue-700 text-white p-5 shadow-lg shadow-blue-500/30 overflow-hidden">
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
+          <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-sm">
+                <Wallet size={16} /> <span className="font-semibold">CakPay</span>
+              </div>
+              <p className="font-heading text-2xl font-extrabold mt-1.5">Rp 5.000</p>
+              <p className="text-xs text-blue-100 mt-0.5">Klik untuk riwayat</p>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/cakpay" className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center hover:bg-white/25 transition"><Plus size={20} /></Link>
+              <Link to="/cakpay" className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center hover:bg-white/25 transition"><Send size={18} /></Link>
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+        </motion.div>
+      </div>
+
+      {/* Service grid (4 cols, white tiles, Mudico style) */}
+      <div className="px-4 mt-5">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 shadow-sm">
+          <div className="grid grid-cols-4 gap-3">
             {services.map((s, i) => {
               const Icon = s.icon;
               return (
-                <motion.div
-                  key={s.key}
-                  variants={tileVariants}
-                  custom={i}
-                  initial="hidden"
-                  animate="show"
-                >
-                  <Link
-                    to={s.path}
-                    data-testid={`service-${s.key}`}
-                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-card hover:bg-secondary/40 transition active:scale-95"
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.08, rotate: -4 }}
-                      whileTap={{ scale: 0.92 }}
-                      className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${s.gradient} grid place-items-center shadow-lg shadow-black/10 ring-2 ring-white dark:ring-zinc-900`}
-                    >
-                      <Icon className="text-white drop-shadow" size={26} strokeWidth={2.4} />
-                      <motion.span
-                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white border border-black/10"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                        transition={{ duration: 1.6, repeat: Infinity }}
-                      />
-                    </motion.div>
-                    <div className="text-center">
-                      <p className="text-xs font-bold text-foreground">{t(lang, s.key)}</p>
-                      <p className="text-[10px] text-muted-foreground">{t(lang, s.key + "_desc")}</p>
+                <motion.div key={s.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="relative">
+                  {s.badge && (
+                    <span className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 bg-rose-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow">{s.badge}</span>
+                  )}
+                  <Link to={s.path} data-testid={`service-${s.key}`} className="block">
+                    <div className="aspect-square rounded-2xl bg-slate-50 dark:bg-zinc-800 grid place-items-center shadow-sm border border-slate-100 dark:border-zinc-700 active:scale-95 transition">
+                      <Icon className={s.color} size={28} strokeWidth={2.2} />
                     </div>
+                    <p className="text-center text-[11px] font-semibold text-foreground mt-1.5">{t(lang, s.key)}</p>
                   </Link>
                 </motion.div>
               );
             })}
           </div>
-        </motion.div>
+        </div>
+      </div>
 
-        {/* PROMO CAROUSEL - from /api/banners (admin-managed) */}
-        <BannerCarousel />
-
-        {/* Why CakJek strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mt-6 grid grid-cols-3 gap-3"
-        >
-          {[
-            { color: "from-cyan-400 to-blue-500", icon: Smartphone, label: "Pesan via HP" },
-            { color: "from-emerald-400 to-teal-500", icon: MapPin, label: "Lokasi presisi" },
-            { color: "from-amber-400 to-orange-500", icon: Package, label: "Cepat sampai" },
-          ].map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <motion.div
-                key={i}
-                whileHover={{ y: -3 }}
-                className="bg-card rounded-2xl p-3 text-center border border-black/5 dark:border-white/10 shadow-sm"
-              >
-                <div className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${f.color} grid place-items-center mb-1.5`}>
-                  <Icon size={18} className="text-white" />
-                </div>
-                <p className="text-[10px] font-semibold text-foreground leading-tight">{f.label}</p>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+      {/* Info strip */}
+      <div className="px-4 mt-5">
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-100 dark:border-emerald-900/30 p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 grid place-items-center"><Bell size={18} className="text-white" /></div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-foreground">CakJek hadir untukmu</p>
+            <p className="text-xs text-muted-foreground">Ojek, makanan, kurir, belanja & top-up dalam satu app.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

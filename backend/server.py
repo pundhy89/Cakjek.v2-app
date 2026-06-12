@@ -37,6 +37,7 @@ class MenuItem(BaseModel):
     description: Optional[str] = ""
     image: Optional[str] = ""
     active: bool = True
+    merchant_id: Optional[str] = None  # for food items
 
 class MenuItemCreate(BaseModel):
     name: str
@@ -45,6 +46,27 @@ class MenuItemCreate(BaseModel):
     description: Optional[str] = ""
     image: Optional[str] = ""
     active: bool = True
+    merchant_id: Optional[str] = None
+
+class Merchant(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    image: str = ""
+    address: str = ""
+    description: str = ""
+    delivery_fee: float = 5000
+    rating: float = 4.5
+    active: bool = True
+
+class MerchantCreate(BaseModel):
+    name: str
+    image: Optional[str] = ""
+    address: Optional[str] = ""
+    description: Optional[str] = ""
+    delivery_fee: Optional[float] = 5000
+    rating: Optional[float] = 4.5
+    active: Optional[bool] = True
 
 class Tariff(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -67,6 +89,7 @@ class Settings(BaseModel):
     service_center_lat: float = -7.2575
     service_center_lng: float = 112.7521
     service_radius_km: float = 20.0
+    mart_delivery_fee: float = 7000.0
 
 class SettingsUpdate(BaseModel):
     whatsapp_number: str
@@ -74,6 +97,7 @@ class SettingsUpdate(BaseModel):
     service_center_lat: Optional[float] = -7.2575
     service_center_lng: Optional[float] = 112.7521
     service_radius_km: Optional[float] = 20.0
+    mart_delivery_fee: Optional[float] = 7000.0
 
 class Banner(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -186,9 +210,44 @@ async def update_settings(payload: SettingsUpdate, _: str = Depends(require_admi
 
 # ---------- Menu ----------
 @api_router.get("/menu/{category}")
-async def get_menu(category: str):
-    items = await db.menu.find({"category": category, "active": True}, {"_id": 0}).to_list(500)
+async def get_menu(category: str, merchant_id: Optional[str] = None):
+    q = {"category": category, "active": True}
+    if merchant_id:
+        q["merchant_id"] = merchant_id
+    items = await db.menu.find(q, {"_id": 0}).to_list(500)
     return items
+
+@api_router.get("/merchants")
+async def get_merchants():
+    items = await db.merchants.find({"active": True}, {"_id": 0}).to_list(200)
+    return items
+
+@api_router.get("/merchants/{merchant_id}")
+async def get_merchant(merchant_id: str):
+    doc = await db.merchants.find_one({"id": merchant_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    return doc
+
+@api_router.get("/admin/merchants")
+async def admin_list_merchants(_: str = Depends(require_admin)):
+    return await db.merchants.find({}, {"_id": 0}).to_list(200)
+
+@api_router.post("/admin/merchants")
+async def admin_create_merchant(payload: MerchantCreate, _: str = Depends(require_admin)):
+    m = Merchant(**payload.model_dump())
+    await db.merchants.insert_one(m.model_dump())
+    return m.model_dump()
+
+@api_router.put("/admin/merchants/{mid}")
+async def admin_update_merchant(mid: str, payload: MerchantCreate, _: str = Depends(require_admin)):
+    await db.merchants.update_one({"id": mid}, {"$set": payload.model_dump()})
+    return await db.merchants.find_one({"id": mid}, {"_id": 0})
+
+@api_router.delete("/admin/merchants/{mid}")
+async def admin_delete_merchant(mid: str, _: str = Depends(require_admin)):
+    await db.merchants.delete_one({"id": mid})
+    return {"ok": True}
 
 @api_router.get("/admin/menu/{category}")
 async def admin_get_menu(category: str, _: str = Depends(require_admin)):
@@ -416,8 +475,23 @@ async def seed():
         ]
         for n, p, d, img in packages:
             await db.menu.insert_one(MenuItem(name=n, price=p, description=d, image=img, category="cakpay").model_dump())
-    # banners
-    if await db.banners.count_documents({}) == 0:
+    # merchants for Cakfood
+    if await db.merchants.count_documents({}) == 0:
+        mlist = [
+            {"name": "Warung Bu Endang", "address": "Jl. Pahlawan 12, Surabaya", "description": "Masakan rumahan khas Jawa Timur", "delivery_fee": 5000, "rating": 4.8, "image": "https://images.unsplash.com/photo-1555126634-323283e090fa?w=400"},
+            {"name": "Bakso Pak Slamet", "address": "Jl. Diponegoro 45", "description": "Bakso & mie ayam mantap", "delivery_fee": 6000, "rating": 4.7, "image": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400"},
+            {"name": "Ayam Geprek Mas Eko", "address": "Jl. Kertajaya 88", "description": "Geprek sambal level 1-10", "delivery_fee": 4500, "rating": 4.6, "image": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400"},
+            {"name": "Es Segeerrr", "address": "Jl. Kayoon 5", "description": "Aneka minuman dingin", "delivery_fee": 4000, "rating": 4.5, "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400"},
+        ]
+        ids = []
+        for m in mlist:
+            obj = Merchant(**m)
+            await db.merchants.insert_one(obj.model_dump())
+            ids.append(obj.id)
+        # Re-tag existing food items round-robin across merchants if no merchant_id
+        food_docs = await db.menu.find({"category": "food", "merchant_id": None}, {"_id": 0}).to_list(200)
+        for i, f in enumerate(food_docs):
+            await db.menu.update_one({"id": f["id"]}, {"$set": {"merchant_id": ids[i % len(ids)]}})
         bdefaults = [
             {"title": "Diskon 40% semua layanan!", "subtitle": "Berlaku untuk pelanggan baru", "code": "CAKJEK", "color_from": "#fb923c", "color_to": "#ec4899", "order_idx": 0},
             {"title": "Gratis ongkir Cakfood", "subtitle": "Minimum belanja Rp 30.000", "code": "FREEONGKIR", "color_from": "#10b981", "color_to": "#06b6d4", "order_idx": 1},

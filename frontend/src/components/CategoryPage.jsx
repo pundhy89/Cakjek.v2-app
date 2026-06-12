@@ -13,12 +13,16 @@ const CategoryPage = ({ category, title, color, service }) => {
   const { lang } = useApp();
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState({});
-  const [form, setForm] = useState({ name: "", phone: "", address: "", addressCoords: null });
+  const [form, setForm] = useState({ name: "", address: "", addressCoords: null });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState({ open: false, url: "" });
+  const [ongkir, setOngkir] = useState(0);
 
   useEffect(() => {
     api.get(`/menu/${category}`).then((r) => setItems(r.data)).catch(() => {});
+    if (category === "mart") {
+      api.get("/settings").then((r) => setOngkir(Number(r.data.mart_delivery_fee || 0)));
+    }
   }, [category]);
 
   const add = (id) => setCart({ ...cart, [id]: (cart[id] || 0) + 1 });
@@ -31,10 +35,11 @@ const CategoryPage = ({ category, title, color, service }) => {
   };
 
   const cartItems = items.filter((i) => cart[i.id]);
-  const total = cartItems.reduce((s, i) => s + i.price * cart[i.id], 0);
+  const subtotal = cartItems.reduce((s, i) => s + i.price * cart[i.id], 0);
+  const total = subtotal + ongkir;
 
   const submit = async () => {
-    if (!form.name || !form.phone || !form.address) {
+    if (!form.name || !form.address) {
       toast.error(t(lang, "fill_required"));
       return;
     }
@@ -45,13 +50,14 @@ const CategoryPage = ({ category, title, color, service }) => {
     setLoading(true);
     const lines = cartItems.map((i) => `- ${i.name} x${cart[i.id]} = ${formatIDR(i.price * cart[i.id])}`).join("\n");
     const pin = form.addressCoords ? `\nPin Alamat: https://maps.google.com/?q=${form.addressCoords.lat},${form.addressCoords.lng}` : "";
-    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nAlamat: ${form.address}${pin}\n\nPesanan:\n${lines}\n\nTotal: ${formatIDR(total)}`;
+    const ongkirLine = ongkir > 0 ? `\nOngkir: ${formatIDR(ongkir)}` : "";
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nTujuan: ${form.address}${pin}\n\nPesanan:\n${lines}\n\nSubtotal: ${formatIDR(subtotal)}${ongkirLine}\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,
         customer_name: form.name,
-        customer_phone: form.phone,
-        details: { address: form.address, address_coords: form.addressCoords, items: cartItems.map((i) => ({ id: i.id, name: i.name, qty: cart[i.id], price: i.price })) },
+        customer_phone: "",
+        details: { address: form.address, address_coords: form.addressCoords, items: cartItems.map((i) => ({ id: i.id, name: i.name, qty: cart[i.id], price: i.price })), subtotal, ongkir },
         total,
         message,
       });
@@ -92,18 +98,18 @@ const CategoryPage = ({ category, title, color, service }) => {
 
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-5 shadow-md space-y-3 mt-4">
           <Field label={t(lang, "name")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} testid="input-name" />
-          <Field label={t(lang, "phone")} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} testid="input-phone" />
           <AddressMapPicker
-            label={t(lang, "address")}
+            label="Tujuan Antar"
             value={form.address}
             coords={form.addressCoords}
             onChange={(addr, c) => setForm((f) => ({ ...f, address: addr, addressCoords: c }))}
             testid="address-picker"
           />
 
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <span className="text-sm text-muted-foreground">{t(lang, "total")}</span>
-            <span data-testid="total-amount" className="font-heading text-xl font-bold">{formatIDR(total)}</span>
+          <div className="border-t border-border pt-3 space-y-1 text-sm">
+            <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatIDR(subtotal)}</span></div>
+            {ongkir > 0 && <div className="flex justify-between text-muted-foreground"><span>Ongkir</span><span>{formatIDR(ongkir)}</span></div>}
+            <div className="flex justify-between font-heading text-lg font-bold pt-1"><span>{t(lang, "total")}</span><span data-testid="total-amount">{formatIDR(total)}</span></div>
           </div>
           <button
             disabled={loading}

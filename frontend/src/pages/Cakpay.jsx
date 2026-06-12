@@ -11,7 +11,7 @@ export default function Cakpay() {
   const { lang } = useApp();
   const [packages, setPackages] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ name: "", phone: "", target_number: "" });
+  const [form, setForm] = useState({ name: "", target_number: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState({ open: false, url: "" });
 
@@ -20,17 +20,17 @@ export default function Cakpay() {
   }, []);
 
   const submit = async () => {
-    if (!form.name || !form.phone || !form.target_number || !selected) {
+    if (!form.name || !form.target_number || !selected) {
       toast.error(t(lang, "fill_required"));
       return;
     }
     setLoading(true);
-    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "cakpay")}*.\n\nNama: ${form.name}\nNo HP: ${form.phone}\nNomor tujuan / ID: ${form.target_number}\nPaket: ${selected.name}\n\nTotal: ${formatIDR(selected.price)}`;
+    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "cakpay")}*.\n\nNama: ${form.name}\nNomor tujuan / ID: ${form.target_number}\nPaket: ${selected.name}\n\nTotal: ${formatIDR(selected.price)}`;
     try {
       const r = await api.post("/orders", {
         service: "cakpay",
         customer_name: form.name,
-        customer_phone: form.phone,
+        customer_phone: "",
         details: { target: form.target_number, package_id: selected.id, package_name: selected.name },
         total: selected.price,
         message,
@@ -68,7 +68,6 @@ export default function Cakpay() {
 
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-5 shadow-md space-y-3 mt-4">
           <Field label={t(lang, "name")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} testid="input-name" />
-          <Field label={t(lang, "phone")} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} testid="input-phone" />
           <Field label="No Tujuan / ID Pelanggan" value={form.target_number} onChange={(v) => setForm({ ...form, target_number: v })} testid="input-target" />
 
           <div className="flex items-center justify-between pt-3 border-t border-border">

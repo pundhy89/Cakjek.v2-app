@@ -7,7 +7,8 @@ import { MobileShell } from "./components/MobileShell";
 import Home from "./pages/Home";
 import Cakride from "./pages/Cakride";
 import Cakcar from "./pages/Cakcar";
-import Cakfood from "./pages/Cakfood";
+import Cakfood from "./pages/CakfoodList";
+import CakfoodMerchant from "./pages/CakfoodMerchant";
 import Caksend from "./pages/Caksend";
 import Cakmart from "./pages/Cakmart";
 import Cakpay from "./pages/Cakpay";
@@ -34,6 +35,7 @@ function App() {
             <Route path="/cakride" element={<Cakride />} />
             <Route path="/cakcar" element={<Cakcar />} />
             <Route path="/cakfood" element={<Cakfood />} />
+            <Route path="/cakfood/:mid" element={<CakfoodMerchant />} />
             <Route path="/caksend" element={<Caksend />} />
             <Route path="/cakmart" element={<Cakmart />} />
             <Route path="/cakpay" element={<Cakpay />} />
