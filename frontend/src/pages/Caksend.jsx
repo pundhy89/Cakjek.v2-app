@@ -27,15 +27,20 @@ export default function Caksend() {
   }, []);
 
   useEffect(() => {
-    const { pickupCoords, destinationCoords } = form;
-    if (pickupCoords && destinationCoords) {
+    const pts = [form.pickupCoords, form.destinationCoords, ...(form.extraStops || []).map((s) => s.destinationCoords)].filter(Boolean);
+    if (pts.length >= 2) {
       setCalcing(true);
-      routeDistanceKm(pickupCoords, destinationCoords).then((km) => {
+      (async () => {
+        let tot = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const km = await routeDistanceKm(pts[i], pts[i + 1]);
+          if (km != null) tot += km;
+        }
         setCalcing(false);
-        if (km != null) setForm((f) => ({ ...f, distance: km }));
-      });
+        if (tot > 0) setForm((f) => ({ ...f, distance: Math.round(tot * 10) / 10 }));
+      })();
     }
-  }, [form.pickupCoords, form.destinationCoords]);
+  }, [form.pickupCoords, form.destinationCoords, JSON.stringify((form.extraStops || []).map((s) => s.destinationCoords))]);
 
   const total = tariff ? Number(tariff.base_fare) + Number(tariff.per_km) * Number(form.distance || 0) : 0;
 
@@ -47,7 +52,12 @@ export default function Caksend() {
     setLoading(true);
     const pCoord = form.pickupCoords ? `\nPin Jemput: https://maps.google.com/?q=${form.pickupCoords.lat},${form.pickupCoords.lng}` : "";
     const dCoord = form.destinationCoords ? `\nPin Tujuan: https://maps.google.com/?q=${form.destinationCoords.lat},${form.destinationCoords.lng}` : "";
-    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nAlamat jemput: ${form.pickup}${pCoord}\n\nPenerima: ${form.receiver}\nAlamat tujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const extraLines = (form.extraStops || []).map((s, i) => {
+      const pin = s.destinationCoords ? `\n  Pin: https://maps.google.com/?q=${s.destinationCoords.lat},${s.destinationCoords.lng}` : "";
+      return `Tujuan ${i + 2}: ${s.destination}${pin}`;
+    }).join("\n");
+    const extraBlock = extraLines ? `\n${extraLines}` : "";
+    const message = `Halo Admin CakJek,\nSaya ingin *${t(lang, "caksend")}*.\n\nPengirim: ${form.name}\nAlamat jemput: ${form.pickup}${pCoord}\n\nPenerima: ${form.receiver}\nTujuan 1: ${form.destination}${dCoord}${extraBlock}\nJarak total: ${form.distance} km\nIsi paket: ${form.package || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service: "caksend",
@@ -84,12 +94,27 @@ export default function Caksend() {
           />
           <Field label={t(lang, "receiver")} value={form.receiver} onChange={(v) => setForm({ ...form, receiver: v })} testid="input-receiver" />
           <AddressMapPicker
-            label={t(lang, "destination")}
+            label="Tujuan 1"
             value={form.destination}
             coords={form.destinationCoords}
             onChange={(addr, c) => setForm((f) => ({ ...f, destination: addr, destinationCoords: c }))}
             testid="destination-picker"
           />
+          {(form.extraStops || []).map((s, i) => (
+            <div key={i} className="relative">
+              <AddressMapPicker
+                label={`Tujuan ${i + 2}`}
+                value={s.destination}
+                coords={s.destinationCoords}
+                onChange={(addr, c) => setForm((f) => ({ ...f, extraStops: f.extraStops.map((x, idx) => idx === i ? { destination: addr, destinationCoords: c } : x) }))}
+                testid={`destination-picker-${i + 1}`}
+              />
+              <button type="button" onClick={() => setForm((f) => ({ ...f, extraStops: f.extraStops.filter((_, idx) => idx !== i) }))} className="absolute top-0 right-0 text-xs text-destructive font-semibold">Hapus</button>
+            </div>
+          ))}
+          <button type="button" onClick={() => setForm((f) => ({ ...f, extraStops: [...(f.extraStops || []), { destination: "", destinationCoords: null }] }))} data-testid="add-stop-btn" className="w-full border border-dashed border-blue-500 text-blue-500 rounded-xl py-2 text-sm font-semibold hover:bg-blue-50 active:scale-95 transition">
+            + Tambah Tujuan
+          </button>
 
           <label className="block">
             <span className="text-xs font-medium text-muted-foreground flex items-center justify-between">
