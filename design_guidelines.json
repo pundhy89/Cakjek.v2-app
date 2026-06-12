@@ -1,0 +1,103 @@
+{
+  "theme": "LIGHT",
+  "archetype": "6",
+  "archetype_name": "Vibrant Play & Soft Tactility",
+  "domain": "Mobile Web Super App (Transportation, Food, Logistics, E-commerce, Payments)",
+  "colors": {
+    "primary": {
+      "light": "#2563EB",
+      "dark": "#3B82F6",
+      "description": "Vibrant Royal Blue for main brand CTA and trust."
+    },
+    "background": {
+      "light": "#FAFAFA",
+      "dark": "#09090B",
+      "description": "Warm zinc for light mode, deep zinc for dark mode."
+    },
+    "surface": {
+      "light": "#FFFFFF",
+      "dark": "#18181B",
+      "description": "Pure white for cards in light mode to contrast with background."
+    },
+    "services": {
+      "cakride": "#10B981",
+      "cakcar": "#3B82F6",
+      "cakfood": "#F97316",
+      "caksend": "#8B5CF6",
+      "cakmart": "#EC4899",
+      "cakpay": "#06B6D4"
+    },
+    "text": {
+      "light": "#18181B",
+      "dark": "#F4F4F5",
+      "muted_light": "#71717A",
+      "muted_dark": "#A1A1AA"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Outfit, sans-serif",
+      "body": "DM Sans, sans-serif"
+    },
+    "rules": {
+      "headings": "Tracking-tight for all headings. Use font-semibold or font-bold.",
+      "body": "Leading-relaxed for better readability on mobile.",
+      "sizing": "H1 max text-4xl on mobile. H2 text-2xl. Use fluid scaling for larger screens if necessary, though this is a mobile-first UI."
+    }
+  },
+  "spacing_and_layout": {
+    "mobile_container": "Use max-w-md mx-auto min-h-screen bg-background relative shadow-2xl for the main app container to simulate a mobile app on desktop browsers.",
+    "admin_container": "Full width layout grid-cols-1 md:grid-cols-5. Sidebar takes 1 col, main content takes 4.",
+    "padding": "Generous spacing. Use p-4 to p-6 inside cards. Use gap-4 or gap-6 for grids.",
+    "grid_bento": "Use a bento-style grid for the 6 services on the home screen. grid-cols-4. Cakride and Cakcar span 2 cols, others span 1 col, or all span 1 col in a 3-col grid."
+  },
+  "surfaces": {
+    "cards": "Neumorphism-lite (Tactile). Mix soft ambient shadows with sharp inner contrast. Classes: bg-white dark:bg-zinc-900 shadow-sm border border-black/5 dark:border-white/10 rounded-2xl or rounded-3xl.",
+    "bottom_nav": "Crystal Glassmorphism. Classes: fixed bottom-0 w-full max-w-md backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-t border-black/5 dark:border-white/10 pb-safe pt-2 px-4 z-50.",
+    "buttons": "Fully rounded (rounded-full) for primary actions to reinforce the friendly, vibrant play archetype."
+  },
+  "components": {
+    "language_toggle": "Place in the Account/Profile section or top header. Use Shadcn DropdownMenu or a custom segmented control.",
+    "dark_mode_toggle": "Place in the Account/Profile section or top header. Switch between light and dark themes using next-themes or native Tailwind dark mode.",
+    "whatsapp_integration": "For ordering, use a button that links to `https://wa.me/{admin_number}?text={encoded_order_details}`.",
+    "admin_charts": "Use Shadcn charts (Recharts) for Daily and Monthly reports.",
+    "service_icons": "Use lucide-react. Bike (Cakride), Car (Cakcar), Pizza/Utensils (Cakfood), Package (Caksend), ShoppingBag (Cakmart), Wallet (Cakpay)."
+  },
+  "animation_and_motion": {
+    "interactions": "Hover states on all cards (scale up 1% or translate-y-1, deepen shadow). Active states scale down slightly.",
+    "page_transitions": "Use Framer Motion for sliding in service detail pages from the right, or bottom sheets sliding up."
+  },
+  "media_urls": {
+    "food_placeholder_1": {
+      "url": "https://images.unsplash.com/photo-1611506168759-1e69a83b5a53?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHw0fHxpbmRvbmVzaWFuJTIwZm9vZCUyMG5hc2klMjBnb3Jlbmd8ZW58MHx8fHwxNzgxMjMyODY0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Nasi Goreng for Cakfood menu item."
+    },
+    "food_placeholder_2": {
+      "url": "https://images.unsplash.com/photo-1680674774705-90b4904b3a7f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHwzfHxpbmRvbmVzaWFuJTIwZm9vZCUyMG5hc2klMjBnb3Jlbmd8ZW58MHx8fHwxNzgxMjMyODY0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Another food item for Cakfood."
+    },
+    "mart_groceries": {
+      "url": "https://images.unsplash.com/photo-1542838132-92c53300491e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGdyb2NlcmllcyUyMG1hcmtldHxlbnwwfHx8fDE3ODEyMzI4NjR8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Fresh vegetables for Cakmart."
+    },
+    "delivery_hero": {
+      "url": "https://images.unsplash.com/photo-1617347454431-f49d7ff5c3b1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxkZWxpdmVyeSUyMHNjb290ZXIlMjBjaXR5fGVufDB8fHx8MTc4MTIzMjg2NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Delivery scooter for Caksend."
+    }
+  },
+  "testing": {
+    "rules": "All interactive elements MUST have data-testid attributes (e.g., data-testid='cakride-service-card', data-testid='order-whatsapp-button')."
+  },
+  "instructions_to_main_agent": [
+    "Ensure the app feels like a native mobile app. Constrain the main user view to max-w-md mx-auto with a shadow on desktop, but allow it to be full width on mobile.",
+    "Implement a persistent bottom navigation bar for the user app (Home, Orders, Account).",
+    "Admin dashboard should be a separate route (e.g., /admin) and should use a standard desktop-friendly layout (sidebar + main content).",
+    "Use lucide-react for all icons.",
+    "Use Shadcn UI components for complex interactions (Select, Dialog, Tabs) but strip Vercel-like styling to match the tactile, friendly vibe.",
+    "Implement language toggle (ID/EN) using a simple context or state, affecting main UI strings.",
+    "Ensure the WhatsApp order flow formats the message nicely: 'Halo Admin, saya ingin pesan layanan [Nama Layanan]. Detail: ...'.",
+    "Avoid using raw <img> tags without alt text. Add rounded corners (rounded-xl) to images.",
+    "For the admin charts, use recharts via Shadcn UI's chart component.",
+    "Use 'Outfit' for all headings and 'DM Sans' for body text. Add these to Tailwind config and import them."
+  ]
+}
