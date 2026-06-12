@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import math
 import secrets
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -63,10 +64,38 @@ class Settings(BaseModel):
     id: str = "settings"
     whatsapp_number: str = "6285233962821"
     app_name: str = "CakJek"
+    service_center_lat: float = -7.2575
+    service_center_lng: float = 112.7521
+    service_radius_km: float = 20.0
 
 class SettingsUpdate(BaseModel):
     whatsapp_number: str
     app_name: Optional[str] = "CakJek"
+    service_center_lat: Optional[float] = -7.2575
+    service_center_lng: Optional[float] = 112.7521
+    service_radius_km: Optional[float] = 20.0
+
+class Banner(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    subtitle: str = ""
+    code: str = ""
+    color_from: str = "#fb923c"
+    color_to: str = "#ec4899"
+    image: str = ""
+    order_idx: int = 0
+    active: bool = True
+
+class BannerCreate(BaseModel):
+    title: str
+    subtitle: Optional[str] = ""
+    code: Optional[str] = ""
+    color_from: Optional[str] = "#fb923c"
+    color_to: Optional[str] = "#ec4899"
+    image: Optional[str] = ""
+    order_idx: Optional[int] = 0
+    active: Optional[bool] = True
 
 class OrderCreate(BaseModel):
     service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay
@@ -92,6 +121,27 @@ class Order(BaseModel):
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin"
 _active_tokens: set = set()
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(a))
+
+def _extract_coords(details: dict):
+    """Yield (label, lat, lng) for any coords-like dict found in details."""
+    if not isinstance(details, dict):
+        return
+    keys = ["pickup_coords", "destination_coords", "address_coords", "pickupCoords", "destinationCoords", "addressCoords"]
+    for k in keys:
+        v = details.get(k)
+        if isinstance(v, dict) and "lat" in v and "lng" in v:
+            try:
+                yield k, float(v["lat"]), float(v["lng"])
+            except (TypeError, ValueError):
+                continue
 
 def require_admin(authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
@@ -184,10 +234,21 @@ async def admin_update_tariff(service: str, payload: TariffUpdate, _: str = Depe
 # ---------- Orders ----------
 @api_router.post("/orders")
 async def create_order(payload: OrderCreate):
+    s = await db.settings.find_one({"id": "settings"}, {"_id": 0}) or {}
+    radius = float(s.get("service_radius_km", 20))
+    c_lat = float(s.get("service_center_lat", -7.2575))
+    c_lng = float(s.get("service_center_lng", 112.7521))
+    if radius > 0:
+        for label, lat, lng in _extract_coords(payload.details):
+            d = haversine_km(c_lat, c_lng, lat, lng)
+            if d > radius:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Lokasi '{label}' di luar area servis ({d:.1f} km dari pusat, batas {radius:.0f} km).",
+                )
     order = Order(**payload.model_dump())
     await db.orders.insert_one(order.model_dump())
-    s = await db.settings.find_one({"id": "settings"}, {"_id": 0})
-    wa = (s or {}).get("whatsapp_number", "6285233962821")
+    wa = s.get("whatsapp_number", "6285233962821")
     wa_url = f"https://wa.me/{wa}?text={quote(order.message)}"
     return {"order": order.model_dump(), "whatsapp_url": wa_url}
 
@@ -260,6 +321,36 @@ async def reports_monthly(year: int, month: int, _: str = Depends(require_admin)
 async def root():
     return {"message": "CakJek API"}
 
+# ---------- Banners ----------
+@api_router.get("/banners")
+async def get_banners():
+    items = await db.banners.find({"active": True}, {"_id": 0}).sort("order_idx", 1).to_list(50)
+    return items
+
+@api_router.get("/admin/banners")
+async def admin_list_banners(_: str = Depends(require_admin)):
+    items = await db.banners.find({}, {"_id": 0}).sort("order_idx", 1).to_list(50)
+    return items
+
+@api_router.post("/admin/banners")
+async def admin_create_banner(payload: BannerCreate, _: str = Depends(require_admin)):
+    b = Banner(**payload.model_dump())
+    await db.banners.insert_one(b.model_dump())
+    return b.model_dump()
+
+@api_router.put("/admin/banners/{banner_id}")
+async def admin_update_banner(banner_id: str, payload: BannerCreate, _: str = Depends(require_admin)):
+    await db.banners.update_one({"id": banner_id}, {"$set": payload.model_dump()})
+    doc = await db.banners.find_one({"id": banner_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    return doc
+
+@api_router.delete("/admin/banners/{banner_id}")
+async def admin_delete_banner(banner_id: str, _: str = Depends(require_admin)):
+    await db.banners.delete_one({"id": banner_id})
+    return {"ok": True}
+
 # ---------- Seed ----------
 async def seed():
     # settings
@@ -311,6 +402,15 @@ async def seed():
         ]
         for n, p, d, img in packages:
             await db.menu.insert_one(MenuItem(name=n, price=p, description=d, image=img, category="cakpay").model_dump())
+    # banners
+    if await db.banners.count_documents({}) == 0:
+        bdefaults = [
+            {"title": "Diskon 40% semua layanan!", "subtitle": "Berlaku untuk pelanggan baru", "code": "CAKJEK", "color_from": "#fb923c", "color_to": "#ec4899", "order_idx": 0},
+            {"title": "Gratis ongkir Cakfood", "subtitle": "Minimum belanja Rp 30.000", "code": "FREEONGKIR", "color_from": "#10b981", "color_to": "#06b6d4", "order_idx": 1},
+            {"title": "Cashback Cakpay 10%", "subtitle": "Top-up minimum Rp 50.000", "code": "PAY10", "color_from": "#6366f1", "color_to": "#a855f7", "order_idx": 2},
+        ]
+        for b in bdefaults:
+            await db.banners.insert_one(Banner(**b).model_dump())
 
 @app.on_event("startup")
 async def on_startup():

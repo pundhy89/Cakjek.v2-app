@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ServiceHeader } from "../components/ServiceHeader";
 import { Field } from "../components/RideForm";
+import OrderSuccessModal from "../components/OrderSuccessModal";
 import { api, formatIDR } from "../lib/api";
 import { useApp } from "../context/AppContext";
 import { t } from "../lib/i18n";
@@ -12,6 +13,7 @@ export default function Cakpay() {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ name: "", phone: "", target_number: "" });
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState({ open: false, url: "" });
 
   useEffect(() => {
     api.get("/menu/cakpay").then((r) => setPackages(r.data)).catch(() => {});
@@ -34,9 +36,9 @@ export default function Cakpay() {
         message,
       });
       toast.success(t(lang, "redirect_wa"));
-      window.location.href = r.data.whatsapp_url;
+      setSuccess({ open: true, url: r.data.whatsapp_url });
     } catch (e) {
-      toast.error("Failed");
+      toast.error(e?.response?.data?.detail || "Failed");
     } finally {
       setLoading(false);
     }
@@ -83,6 +85,7 @@ export default function Cakpay() {
           </button>
         </div>
       </div>
+      <OrderSuccessModal open={success.open} onDone={() => { window.location.href = success.url; }} />
     </div>
   );
 }

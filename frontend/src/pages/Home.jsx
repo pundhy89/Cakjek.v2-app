@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { t } from "../lib/i18n";
+import BannerCarousel from "../components/BannerCarousel";
 
 const services = [
   { key: "cakride", path: "/cakride", icon: Bike, gradient: "from-emerald-400 via-emerald-500 to-teal-600", ring: "ring-emerald-300" },
@@ -192,43 +193,8 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* PROMO CARD - playful illustration */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, type: "spring" }}
-          className="relative mt-6 rounded-[2rem] bg-gradient-to-br from-orange-400 via-pink-500 to-rose-500 p-5 text-white shadow-xl shadow-pink-500/20 overflow-hidden"
-        >
-          <div className="relative z-10 max-w-[60%]">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-yellow-100">Promo</p>
-            <h3 className="font-heading text-xl font-extrabold mt-1 leading-snug">
-              Diskon 40% <br /> semua layanan!
-            </h3>
-            <p className="text-xs text-white/90 mt-1">Pakai kode: <span className="bg-white/25 px-2 py-0.5 rounded font-bold">CAKJEK</span></p>
-          </div>
-          {/* animated package icon receiver */}
-          <motion.div
-            animate={{ y: [0, -6, 0], rotate: [0, -4, 4, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute right-4 top-1/2 -translate-y-1/2"
-          >
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-yellow-300 grid place-items-center shadow-lg shadow-rose-700/30">
-                <Package size={36} className="text-orange-700" strokeWidth={2.4} />
-              </div>
-              <motion.div
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.6, repeat: Infinity }}
-                className="absolute -top-2 -right-2 bg-white text-rose-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow"
-              >
-                NEW
-              </motion.div>
-            </div>
-          </motion.div>
-          {/* decorative dots */}
-          <div className="absolute -bottom-6 -left-4 w-24 h-24 rounded-full bg-white/15" />
-          <div className="absolute top-2 right-20 w-16 h-16 rounded-full bg-yellow-200/30 blur-md" />
-        </motion.div>
+        {/* PROMO CAROUSEL - from /api/banners (admin-managed) */}
+        <BannerCarousel />
 
         {/* Why CakJek strip */}
         <motion.div

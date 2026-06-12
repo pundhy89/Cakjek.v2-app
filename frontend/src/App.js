@@ -21,6 +21,7 @@ import AdminTariff from "./pages/admin/AdminTariff";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminBanners from "./pages/admin/AdminBanners";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route path="mart" element={<AdminMenu category="mart" />} />
             <Route path="cakpay" element={<AdminMenu category="cakpay" />} />
             <Route path="tariff" element={<AdminTariff />} />
+            <Route path="banners" element={<AdminBanners />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

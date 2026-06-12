@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ServiceHeader } from "../components/ServiceHeader";
 import { Field } from "../components/RideForm";
 import AddressMapPicker from "../components/AddressMapPicker";
+import OrderSuccessModal from "../components/OrderSuccessModal";
 import { api, formatIDR } from "../lib/api";
 import { routeDistanceKm } from "../lib/maps";
 import { useApp } from "../context/AppContext";
@@ -19,6 +20,7 @@ export default function Caksend() {
   });
   const [calcing, setCalcing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState({ open: false, url: "" });
 
   useEffect(() => {
     api.get("/tariff/caksend").then((r) => setTariff(r.data)).catch(() => {});
@@ -56,9 +58,9 @@ export default function Caksend() {
         message,
       });
       toast.success(t(lang, "redirect_wa"));
-      window.location.href = r.data.whatsapp_url;
+      setSuccess({ open: true, url: r.data.whatsapp_url });
     } catch (e) {
-      toast.error("Failed");
+      toast.error(e?.response?.data?.detail || "Failed");
     } finally {
       setLoading(false);
     }
@@ -124,6 +126,7 @@ export default function Caksend() {
           </button>
         </div>
       </div>
+      <OrderSuccessModal open={success.open} onDone={() => { window.location.href = success.url; }} />
     </div>
   );
 }
