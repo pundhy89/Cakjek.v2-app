@@ -64,8 +64,10 @@ export default function AdminSettings() {
             <input data-testid="setting-mart-fee" type="number" value={form.mart_delivery_fee || 0} onChange={(e) => setForm({ ...form, mart_delivery_fee: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
           </label>
         </div>
-            <p className="text-xs text-muted-foreground">Order di luar radius akan otomatis ditolak.</p>
-          </div>
+
+        <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-6 shadow-sm space-y-4">
+          <h2 className="font-heading font-bold">Area Servis</h2>
+          <p className="text-xs text-muted-foreground">Order di luar radius akan otomatis ditolak.</p>
           <AddressMapPicker
             label="Pusat area servis"
             value={centerAddr}
