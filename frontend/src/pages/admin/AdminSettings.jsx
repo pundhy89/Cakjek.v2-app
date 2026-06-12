@@ -59,10 +59,7 @@ export default function AdminSettings() {
             <span className="text-xs text-muted-foreground font-medium">App Name</span>
             <input data-testid="setting-appname" value={form.app_name} onChange={(e) => setForm({ ...form, app_name: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
           </label>
-          <label className="block">
-            <span className="text-xs text-muted-foreground font-medium">Ongkir Cakmart (Rp)</span>
-            <input data-testid="setting-mart-fee" type="number" value={form.mart_delivery_fee || 0} onChange={(e) => setForm({ ...form, mart_delivery_fee: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
-          </label>
+          <p className="text-[11px] text-muted-foreground">Ongkir Cakmart sekarang diatur di menu <span className="font-semibold">Tarif</span>.</p>
         </div>
 
         <div className="bg-card rounded-3xl border border-black/5 dark:border-white/10 p-6 shadow-sm space-y-4">
