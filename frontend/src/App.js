@@ -14,6 +14,7 @@ import Cakmart from "./pages/Cakmart";
 import Cakpay from "./pages/Cakpay";
 import Orders from "./pages/Orders";
 import Account from "./pages/Account";
+import Chat from "./pages/Chat";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -42,6 +43,7 @@ function App() {
             <Route path="/cakpay" element={<Cakpay />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>

@@ -11,11 +11,12 @@ import { toast } from "sonner";
 const RideForm = ({ service, title, color, lang }) => {
   const [tariff, setTariff] = useState(null);
   const [form, setForm] = useState({
-    name: "", phone: "",
+    name: "",
     pickup: "", pickupCoords: null,
-    destination: "", destinationCoords: null,
-    distance: 1, notes: "",
+    stops: [{ destination: "", destinationCoords: null }],
+    notes: "",
   });
+  const [distance, setDistance] = useState(1);
   const [calcing, setCalcing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState({ open: false, url: "" });
@@ -24,29 +25,40 @@ const RideForm = ({ service, title, color, lang }) => {
     api.get(`/tariff/${service}`).then((r) => setTariff(r.data)).catch(() => {});
   }, [service]);
 
-  // Auto compute distance whenever both coords change
+  // Auto compute total distance (sum of legs: pickup→stop1→stop2…)
   useEffect(() => {
-    const { pickupCoords, destinationCoords } = form;
-    if (pickupCoords && destinationCoords) {
-      setCalcing(true);
-      routeDistanceKm(pickupCoords, destinationCoords).then((km) => {
-        setCalcing(false);
-        if (km != null) setForm((f) => ({ ...f, distance: km }));
-      });
-    }
-  }, [form.pickupCoords, form.destinationCoords]);
+    const points = [form.pickupCoords, ...form.stops.map((s) => s.destinationCoords)].filter(Boolean);
+    if (points.length < 2) return;
+    setCalcing(true);
+    (async () => {
+      let total = 0;
+      for (let i = 0; i < points.length - 1; i++) {
+        const km = await routeDistanceKm(points[i], points[i + 1]);
+        if (km != null) total += km;
+      }
+      setCalcing(false);
+      setDistance(Math.round(total * 10) / 10 || 1);
+    })();
+  }, [form.pickupCoords, JSON.stringify(form.stops.map((s) => s.destinationCoords))]);
 
-  const total = tariff ? Number(tariff.base_fare) + Number(tariff.per_km) * Number(form.distance || 0) : 0;
+  const total = tariff ? Number(tariff.base_fare) + Number(tariff.per_km) * Number(distance || 0) : 0;
+
+  const addStop = () => setForm((f) => ({ ...f, stops: [...f.stops, { destination: "", destinationCoords: null }] }));
+  const removeStop = (i) => setForm((f) => ({ ...f, stops: f.stops.filter((_, idx) => idx !== i) }));
+  const updateStop = (i, addr, c) => setForm((f) => ({ ...f, stops: f.stops.map((s, idx) => (idx === i ? { destination: addr, destinationCoords: c } : s)) }));
 
   const submit = async () => {
-    if (!form.name || !form.pickup || !form.destination) {
+    if (!form.name || !form.pickup || form.stops.some((s) => !s.destination)) {
       toast.error(t(lang, "fill_required"));
       return;
     }
     setLoading(true);
     const pCoord = form.pickupCoords ? `\nPin Jemput: https://maps.google.com/?q=${form.pickupCoords.lat},${form.pickupCoords.lng}` : "";
-    const dCoord = form.destinationCoords ? `\nPin Tujuan: https://maps.google.com/?q=${form.destinationCoords.lat},${form.destinationCoords.lng}` : "";
-    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nJemput: ${form.pickup}${pCoord}\nTujuan: ${form.destination}${dCoord}\nJarak: ${form.distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const stopLines = form.stops.map((s, i) => {
+      const pin = s.destinationCoords ? `\n  Pin: https://maps.google.com/?q=${s.destinationCoords.lat},${s.destinationCoords.lng}` : "";
+      return `Tujuan ${i + 1}: ${s.destination}${pin}`;
+    }).join("\n");
+    const message = `Halo Admin CakJek,\nSaya ingin pesan *${title}*.\n\nNama: ${form.name}\nJemput: ${form.pickup}${pCoord}\n${stopLines}\nJarak total: ${distance} km\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service,
@@ -54,8 +66,7 @@ const RideForm = ({ service, title, color, lang }) => {
         customer_phone: "",
         details: {
           pickup: form.pickup, pickup_coords: form.pickupCoords,
-          destination: form.destination, destination_coords: form.destinationCoords,
-          distance: form.distance, notes: form.notes,
+          stops: form.stops, distance, notes: form.notes,
         },
         total,
         message,
@@ -85,28 +96,37 @@ const RideForm = ({ service, title, color, lang }) => {
             onChange={(addr, c) => setForm((f) => ({ ...f, pickup: addr, pickupCoords: c }))}
             testid="pickup-picker"
           />
-          <AddressMapPicker
-            label={t(lang, "destination")}
-            value={form.destination}
-            coords={form.destinationCoords}
-            onChange={(addr, c) => setForm((f) => ({ ...f, destination: addr, destinationCoords: c }))}
-            testid="destination-picker"
-          />
+          {form.stops.map((s, i) => (
+            <div key={i} className="relative">
+              <AddressMapPicker
+                label={`Tujuan ${i + 1}`}
+                value={s.destination}
+                coords={s.destinationCoords}
+                onChange={(addr, c) => updateStop(i, addr, c)}
+                testid={`destination-picker-${i}`}
+              />
+              {form.stops.length > 1 && (
+                <button type="button" onClick={() => removeStop(i)} data-testid={`remove-stop-${i}`} className="absolute top-0 right-0 text-xs text-destructive font-semibold">Hapus</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addStop} data-testid="add-stop-btn" className="w-full border border-dashed border-blue-500 text-blue-500 rounded-xl py-2 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-95 transition">
+            + Tambah Tujuan
+          </button>
 
           <label className="block">
             <span className="text-xs font-medium text-muted-foreground flex items-center justify-between">
-              <span>{t(lang, "distance")}</span>
-              {calcing && <span className="text-[10px] text-primary">menghitung rute…</span>}
-              {!calcing && form.pickupCoords && form.destinationCoords && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400">otomatis dari rute jalan</span>
+              <span>Jarak Total (km)</span>
+              {calcing && <span className="text-[10px] text-primary">menghitung…</span>}
+              {!calcing && form.pickupCoords && form.stops.some((s) => s.destinationCoords) && (
+                <span className="text-[10px] text-emerald-600">otomatis dari rute</span>
               )}
             </span>
             <input
               data-testid="input-distance"
-              type="number"
-              step="0.1"
-              value={form.distance}
-              onChange={(e) => setForm({ ...form, distance: e.target.value })}
+              type="number" step="0.1"
+              value={distance}
+              onChange={(e) => setDistance(e.target.value)}
               className="mt-1 w-full bg-secondary text-foreground rounded-xl px-4 py-2.5 text-sm border border-transparent focus:border-primary focus:bg-card outline-none transition"
             />
           </label>
