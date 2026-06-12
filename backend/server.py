@@ -86,6 +86,8 @@ class Banner(BaseModel):
     image: str = ""
     order_idx: int = 0
     active: bool = True
+    start_date: Optional[str] = None  # YYYY-MM-DD
+    end_date: Optional[str] = None    # YYYY-MM-DD
 
 class BannerCreate(BaseModel):
     title: str
@@ -96,6 +98,8 @@ class BannerCreate(BaseModel):
     image: Optional[str] = ""
     order_idx: Optional[int] = 0
     active: Optional[bool] = True
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
 
 class OrderCreate(BaseModel):
     service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay
@@ -324,8 +328,18 @@ async def root():
 # ---------- Banners ----------
 @api_router.get("/banners")
 async def get_banners():
+    today = datetime.now(timezone.utc).date().isoformat()
     items = await db.banners.find({"active": True}, {"_id": 0}).sort("order_idx", 1).to_list(50)
-    return items
+    visible = []
+    for b in items:
+        s = b.get("start_date")
+        e = b.get("end_date")
+        if s and today < s:
+            continue
+        if e and today > e:
+            continue
+        visible.append(b)
+    return visible
 
 @api_router.get("/admin/banners")
 async def admin_list_banners(_: str = Depends(require_admin)):

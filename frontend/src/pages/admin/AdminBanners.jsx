@@ -5,7 +5,7 @@ import { t } from "../../lib/i18n";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 
-const empty = { title: "", subtitle: "", code: "", color_from: "#fb923c", color_to: "#ec4899", image: "", order_idx: 0, active: true };
+const empty = { title: "", subtitle: "", code: "", color_from: "#fb923c", color_to: "#ec4899", image: "", order_idx: 0, active: true, start_date: "", end_date: "" };
 
 export default function AdminBanners() {
   const { lang } = useApp();
@@ -17,11 +17,16 @@ export default function AdminBanners() {
   useEffect(() => { load(); }, []);
 
   const openNew = () => { setEditing("new"); setForm(empty); };
-  const openEdit = (it) => { setEditing(it.id); setForm({ ...it }); };
+  const openEdit = (it) => { setEditing(it.id); setForm({ ...empty, ...it, start_date: it.start_date || "", end_date: it.end_date || "" }); };
   const close = () => { setEditing(null); setForm(empty); };
 
   const save = async () => {
-    const payload = { ...form, order_idx: Number(form.order_idx) };
+    const payload = {
+      ...form,
+      order_idx: Number(form.order_idx),
+      start_date: form.start_date || null,
+      end_date: form.end_date || null,
+    };
     try {
       if (editing === "new") await api.post("/admin/banners", payload);
       else await api.put(`/admin/banners/${editing}`, payload);
@@ -58,10 +63,17 @@ export default function AdminBanners() {
               <p className="text-xs opacity-90 mt-0.5">{b.subtitle}</p>
               {b.code && <span className="inline-block mt-2 text-[10px] bg-white/25 px-2 py-0.5 rounded font-bold">{b.code}</span>}
             </div>
-            <div className="p-3 flex items-center justify-between">
-              <span className={`text-xs font-semibold ${b.active ? "text-emerald-600" : "text-muted-foreground"}`}>
-                {b.active ? "Aktif" : "Nonaktif"}
-              </span>
+            <div className="p-3 flex items-center justify-between gap-2">
+              <div className="flex flex-col">
+                <span className={`text-xs font-semibold ${b.active ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  {b.active ? "Aktif" : "Nonaktif"}
+                </span>
+                {(b.start_date || b.end_date) && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {b.start_date || "…"} → {b.end_date || "…"}
+                  </span>
+                )}
+              </div>
               <div className="flex gap-1">
                 <button data-testid={`edit-banner-${b.id}`} onClick={() => openEdit(b)} className="p-2 rounded-lg hover:bg-secondary"><Edit2 size={14} /></button>
                 <button data-testid={`del-banner-${b.id}`} onClick={() => remove(b.id)} className="p-2 rounded-lg hover:bg-secondary text-destructive"><Trash2 size={14} /></button>
@@ -89,6 +101,11 @@ export default function AdminBanners() {
               </div>
               <F label="Image URL (optional)" v={form.image} on={(v) => setForm({ ...form, image: v })} testid="bf-img" />
               <F label="Order Index" v={form.order_idx} on={(v) => setForm({ ...form, order_idx: v })} type="number" testid="bf-order" />
+              <div className="grid grid-cols-2 gap-2">
+                <F label="Tanggal Mulai (opsional)" v={form.start_date} on={(v) => setForm({ ...form, start_date: v })} type="date" testid="bf-start" />
+                <F label="Tanggal Selesai (opsional)" v={form.end_date} on={(v) => setForm({ ...form, end_date: v })} type="date" testid="bf-end" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Kosongkan tanggal untuk tampil terus-menerus selama banner aktif.</p>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> Aktif
               </label>
