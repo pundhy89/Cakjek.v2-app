@@ -1,56 +1,65 @@
-import { useEffect } from "react";
+import React from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
+import { AppProvider } from "./context/AppContext";
+import { MobileShell } from "./components/MobileShell";
+import Home from "./pages/Home";
+import Cakride from "./pages/Cakride";
+import Cakcar from "./pages/Cakcar";
+import Cakfood from "./pages/Cakfood";
+import Caksend from "./pages/Caksend";
+import Cakmart from "./pages/Cakmart";
+import Cakpay from "./pages/Cakpay";
+import Orders from "./pages/Orders";
+import Account from "./pages/Account";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminMenu from "./pages/admin/AdminMenu";
+import AdminTariff from "./pages/admin/AdminTariff";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminOrders from "./pages/admin/AdminOrders";
 
 function App() {
   return (
-    <div className="App">
+    <AppProvider>
       <BrowserRouter>
+        <Toaster richColors position="top-center" />
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
+          <Route element={<ShellRoute />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/cakride" element={<Cakride />} />
+            <Route path="/cakcar" element={<Cakcar />} />
+            <Route path="/cakfood" element={<Cakfood />} />
+            <Route path="/caksend" element={<Caksend />} />
+            <Route path="/cakmart" element={<Cakmart />} />
+            <Route path="/cakpay" element={<Cakpay />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/account" element={<Account />} />
+          </Route>
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="food" element={<AdminMenu category="food" />} />
+            <Route path="mart" element={<AdminMenu category="mart" />} />
+            <Route path="cakpay" element={<AdminMenu category="cakpay" />} />
+            <Route path="tariff" element={<AdminTariff />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
       </BrowserRouter>
-    </div>
+    </AppProvider>
   );
 }
+
+const ShellRoute = () => (
+  <MobileShell>
+    <Outlet />
+  </MobileShell>
+);
 
 export default App;
