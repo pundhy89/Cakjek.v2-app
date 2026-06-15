@@ -4,6 +4,7 @@ import { useApp } from "../../context/AppContext";
 import { t } from "../../lib/i18n";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X, Star } from "lucide-react";
+import ImageUploader from "../../components/admin/ImageUploader";
 
 const empty = { name: "", image: "", address: "", description: "", delivery_fee: 5000, rating: 4.5, active: true };
 
@@ -77,7 +78,7 @@ export default function AdminMerchants() {
               <F label="Nama Warung" v={form.name} on={(v) => setForm({ ...form, name: v })} testid="mf-name" />
               <F label="Deskripsi" v={form.description} on={(v) => setForm({ ...form, description: v })} testid="mf-desc" />
               <F label="Alamat" v={form.address} on={(v) => setForm({ ...form, address: v })} testid="mf-addr" />
-              <F label="Image URL" v={form.image} on={(v) => setForm({ ...form, image: v })} testid="mf-img" />
+              <ImageUploader value={form.image} onChange={(v) => setForm({ ...form, image: v })} testid="mf-img" />
               <div className="grid grid-cols-2 gap-2">
                 <F label="Ongkir (Rp)" type="number" v={form.delivery_fee} on={(v) => setForm({ ...form, delivery_fee: v })} testid="mf-fee" />
                 <F label="Rating" type="number" v={form.rating} on={(v) => setForm({ ...form, rating: v })} testid="mf-rating" />

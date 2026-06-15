@@ -4,6 +4,7 @@ import { useApp } from "../../context/AppContext";
 import { t } from "../../lib/i18n";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
+import ImageUploader from "../../components/admin/ImageUploader";
 
 const empty = { name: "", price: 0, description: "", image: "", active: true, merchant_id: null };
 
@@ -103,7 +104,7 @@ export default function AdminMenu({ category }) {
               <FF label="Name" v={form.name} on={(v) => setForm({ ...form, name: v })} testid="form-name" />
               <FF label={t(lang, "price")} type="number" v={form.price} on={(v) => setForm({ ...form, price: v })} testid="form-price" />
               <FF label={t(lang, "description")} v={form.description} on={(v) => setForm({ ...form, description: v })} testid="form-desc" />
-              <FF label={t(lang, "image_url")} v={form.image} on={(v) => setForm({ ...form, image: v })} testid="form-image" />
+              <ImageUploader value={form.image} onChange={(v) => setForm({ ...form, image: v })} testid="form-image" />
               {category === "food" && (
                 <label className="block">
                   <span className="text-xs font-medium text-muted-foreground">Warung</span>

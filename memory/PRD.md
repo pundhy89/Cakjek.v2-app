@@ -17,6 +17,10 @@ Setiap pemesanan langsung masuk ke WhatsApp admin otomatis terketik pilihannya."
 - End-user (no login): orders services on mobile web.
 - Admin: manages menus, tariffs, settings, views reports.
 
+## Implemented (2026-02-15)
+- Admin Tariff: tambah field "Cakmart (Flat)" delivery fee.
+- ImageUploader (Base64, client-side resize max 800px) terintegrasi di Admin Merchants (Cakfood) dan Admin Menu (Cakfood/Cakmart/Cakpay) menggantikan input URL.
+
 ## Implemented (2026-02-12)
 - Home with 6 services + promo banner.
 - Cakride, Cakcar (km tariff). Caksend (km tariff + receiver/package).
