@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import ImageUploader from "../../components/admin/ImageUploader";
 
-const empty = { name: "", address: "", description: "", facilities: "", price_month: 0, image: "", available: true, active: true };
+const empty = { name: "", address: "", description: "", facilities: "", price_day: 0, price_week: 0, price_month: 0, image: "", available: true, active: true };
 
 export default function AdminKost() {
   const [items, setItems] = useState([]);
@@ -19,7 +19,12 @@ export default function AdminKost() {
   const close = () => { setEditing(null); setForm(empty); };
 
   const save = async () => {
-    const payload = { ...form, price_month: Number(form.price_month) };
+    const payload = {
+      ...form,
+      price_day: Number(form.price_day || 0),
+      price_week: Number(form.price_week || 0),
+      price_month: Number(form.price_month || 0),
+    };
     try {
       if (editing === "new") await api.post("/admin/kost", payload);
       else await api.put(`/admin/kost/${editing}`, payload);
@@ -51,7 +56,11 @@ export default function AdminKost() {
               <p className="font-heading font-bold">{k.name}</p>
               <p className="text-xs text-muted-foreground line-clamp-1">{k.address}</p>
               <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{k.facilities}</p>
-              <p className="text-sm font-bold text-emerald-600 mt-2">{formatIDR(k.price_month)}/bln</p>
+              <div className="mt-2 space-y-0.5 text-xs">
+                {k.price_day > 0 && <p className="text-emerald-600 font-semibold">{formatIDR(k.price_day)}<span className="text-muted-foreground font-normal">/hari</span></p>}
+                {k.price_week > 0 && <p className="text-emerald-600 font-semibold">{formatIDR(k.price_week)}<span className="text-muted-foreground font-normal">/minggu</span></p>}
+                {k.price_month > 0 && <p className="text-emerald-600 font-semibold">{formatIDR(k.price_month)}<span className="text-muted-foreground font-normal">/bulan</span></p>}
+              </div>
               <div className="flex items-center justify-between mt-2">
                 <span className={`text-xs font-semibold ${k.active ? "text-emerald-600" : "text-muted-foreground"}`}>{k.active ? "Aktif" : "Nonaktif"}</span>
                 <div className="flex gap-1">
@@ -77,7 +86,12 @@ export default function AdminKost() {
               <F label="Alamat" v={form.address} on={(v) => setForm({ ...form, address: v })} testid="kf-addr" />
               <F label="Fasilitas (pisahkan dengan koma)" v={form.facilities} on={(v) => setForm({ ...form, facilities: v })} testid="kf-fac" />
               <F label="Deskripsi" v={form.description} on={(v) => setForm({ ...form, description: v })} testid="kf-desc" />
-              <F label="Harga per bulan (Rp)" type="number" v={form.price_month} on={(v) => setForm({ ...form, price_month: v })} testid="kf-price" />
+              <div className="grid grid-cols-3 gap-2">
+                <F label="Harga/hari" type="number" v={form.price_day} on={(v) => setForm({ ...form, price_day: v })} testid="kf-price-day" />
+                <F label="Harga/minggu" type="number" v={form.price_week} on={(v) => setForm({ ...form, price_week: v })} testid="kf-price-week" />
+                <F label="Harga/bulan" type="number" v={form.price_month} on={(v) => setForm({ ...form, price_month: v })} testid="kf-price-month" />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Set 0 untuk durasi yang tidak ditawarkan.</p>
               <ImageUploader value={form.image} onChange={(v) => setForm({ ...form, image: v })} testid="kf-img" />
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> Aktif

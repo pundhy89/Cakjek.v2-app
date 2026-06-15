@@ -140,6 +140,8 @@ class Kost(BaseModel):
     address: str = ""
     description: str = ""
     facilities: str = ""  # comma-separated, e.g., "AC, WiFi, Kamar mandi dalam"
+    price_day: float = 0
+    price_week: float = 0
     price_month: float = 0
     image: str = ""
     available: bool = True
@@ -150,6 +152,8 @@ class KostCreate(BaseModel):
     address: Optional[str] = ""
     description: Optional[str] = ""
     facilities: Optional[str] = ""
+    price_day: Optional[float] = 0
+    price_week: Optional[float] = 0
     price_month: Optional[float] = 0
     image: Optional[str] = ""
     available: Optional[bool] = True
@@ -162,9 +166,15 @@ class Rent(BaseModel):
     type: str = "mobil"  # mobil | motor
     description: str = ""
     image: str = ""
-    price_day: float = 0  # tanpa sopir / lepas kunci (untuk motor ini default)
-    price_with_driver: float = 0  # khusus mobil: harga sewa + sopir per hari
-    allow_with_driver: bool = False  # khusus mobil
+    # Lepas kunci / tanpa sopir
+    price_day: float = 0
+    price_week: float = 0
+    price_month: float = 0
+    # Plus sopir (khusus mobil)
+    allow_with_driver: bool = False
+    price_with_driver_day: float = 0
+    price_with_driver_week: float = 0
+    price_with_driver_month: float = 0
     available: bool = True
     active: bool = True
 
@@ -174,8 +184,12 @@ class RentCreate(BaseModel):
     description: Optional[str] = ""
     image: Optional[str] = ""
     price_day: Optional[float] = 0
-    price_with_driver: Optional[float] = 0
+    price_week: Optional[float] = 0
+    price_month: Optional[float] = 0
     allow_with_driver: Optional[bool] = False
+    price_with_driver_day: Optional[float] = 0
+    price_with_driver_week: Optional[float] = 0
+    price_with_driver_month: Optional[float] = 0
     available: Optional[bool] = True
     active: Optional[bool] = True
 
@@ -628,19 +642,19 @@ async def seed():
     # CakKost
     if await db.kost.count_documents({}) == 0:
         klist = [
-            {"name": "Kost Melati No. 7", "address": "Jl. Melati 7, Surabaya", "description": "Dekat kampus, lingkungan tenang.", "facilities": "AC, WiFi, Kamar mandi dalam, Parkir motor", "price_month": 850000, "image": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=600"},
-            {"name": "Kost Putra Bahagia", "address": "Jl. Diponegoro 22", "description": "Khusus putra, dekat pasar.", "facilities": "Kipas angin, WiFi, Dapur bersama", "price_month": 650000, "image": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600"},
-            {"name": "Kost Putri Anggrek", "address": "Jl. Anggrek 14", "description": "Khusus putri, ada CCTV.", "facilities": "AC, WiFi, KM dalam, Laundry", "price_month": 1200000, "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"},
+            {"name": "Kost Melati No. 7", "address": "Jl. Melati 7, Surabaya", "description": "Dekat kampus, lingkungan tenang.", "facilities": "AC, WiFi, Kamar mandi dalam, Parkir motor", "price_day": 50000, "price_week": 280000, "price_month": 850000, "image": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=600"},
+            {"name": "Kost Putra Bahagia", "address": "Jl. Diponegoro 22", "description": "Khusus putra, dekat pasar.", "facilities": "Kipas angin, WiFi, Dapur bersama", "price_day": 40000, "price_week": 220000, "price_month": 650000, "image": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600"},
+            {"name": "Kost Putri Anggrek", "address": "Jl. Anggrek 14", "description": "Khusus putri, ada CCTV.", "facilities": "AC, WiFi, KM dalam, Laundry", "price_day": 70000, "price_week": 400000, "price_month": 1200000, "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"},
         ]
         for k in klist:
             await db.kost.insert_one(Kost(**k).model_dump())
     # CakRent
     if await db.rent.count_documents({}) == 0:
         rlist = [
-            {"name": "Honda Beat 2022", "type": "motor", "description": "Motor matic irit, helm 2 disediakan.", "price_day": 75000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600"},
-            {"name": "Yamaha NMAX 2023", "type": "motor", "description": "Matic premium, nyaman jarak jauh.", "price_day": 150000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600"},
-            {"name": "Toyota Avanza 2022", "type": "mobil", "description": "MPV 7 penumpang, bensin penuh.", "price_day": 350000, "price_with_driver": 550000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600"},
-            {"name": "Daihatsu Xenia 2021", "type": "mobil", "description": "Irit BBM, AC dingin.", "price_day": 325000, "price_with_driver": 525000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600"},
+            {"name": "Honda Beat 2022", "type": "motor", "description": "Motor matic irit, helm 2 disediakan.", "price_day": 75000, "price_week": 450000, "price_month": 1500000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600"},
+            {"name": "Yamaha NMAX 2023", "type": "motor", "description": "Matic premium, nyaman jarak jauh.", "price_day": 150000, "price_week": 900000, "price_month": 3000000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600"},
+            {"name": "Toyota Avanza 2022", "type": "mobil", "description": "MPV 7 penumpang, bensin penuh.", "price_day": 350000, "price_week": 2100000, "price_month": 7500000, "price_with_driver_day": 550000, "price_with_driver_week": 3500000, "price_with_driver_month": 12000000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600"},
+            {"name": "Daihatsu Xenia 2021", "type": "mobil", "description": "Irit BBM, AC dingin.", "price_day": 325000, "price_week": 1900000, "price_month": 7000000, "price_with_driver_day": 525000, "price_with_driver_week": 3300000, "price_with_driver_month": 11500000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600"},
         ]
         for r in rlist:
             await db.rent.insert_one(Rent(**r).model_dump())
@@ -657,6 +671,15 @@ async def seed():
 @app.on_event("startup")
 async def on_startup():
     await seed()
+    # Migrate old rent docs: price_with_driver → price_with_driver_day
+    async for d in db.rent.find({"price_with_driver": {"$exists": True}}, {"id": 1, "price_with_driver": 1}):
+        await db.rent.update_one(
+            {"id": d["id"]},
+            {
+                "$set": {"price_with_driver_day": d.get("price_with_driver", 0)},
+                "$unset": {"price_with_driver": ""},
+            },
+        )
 
 app.include_router(api_router)
 

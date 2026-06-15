@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import ImageUploader from "../../components/admin/ImageUploader";
 
-const empty = { name: "", type: "mobil", description: "", image: "", price_day: 0, price_with_driver: 0, allow_with_driver: false, available: true, active: true };
+const empty = { name: "", type: "mobil", description: "", image: "", price_day: 0, price_week: 0, price_month: 0, allow_with_driver: false, price_with_driver_day: 0, price_with_driver_week: 0, price_with_driver_month: 0, available: true, active: true };
 
 export default function AdminRent() {
   const [items, setItems] = useState([]);
@@ -19,11 +19,16 @@ export default function AdminRent() {
   const close = () => { setEditing(null); setForm(empty); };
 
   const save = async () => {
+    const isMobil = form.type === "mobil";
     const payload = {
       ...form,
-      price_day: Number(form.price_day),
-      price_with_driver: Number(form.price_with_driver || 0),
-      allow_with_driver: form.type === "mobil" ? !!form.allow_with_driver : false,
+      price_day: Number(form.price_day || 0),
+      price_week: Number(form.price_week || 0),
+      price_month: Number(form.price_month || 0),
+      allow_with_driver: isMobil ? !!form.allow_with_driver : false,
+      price_with_driver_day: isMobil && form.allow_with_driver ? Number(form.price_with_driver_day || 0) : 0,
+      price_with_driver_week: isMobil && form.allow_with_driver ? Number(form.price_with_driver_week || 0) : 0,
+      price_with_driver_month: isMobil && form.allow_with_driver ? Number(form.price_with_driver_month || 0) : 0,
     };
     try {
       if (editing === "new") await api.post("/admin/rent", payload);
@@ -59,8 +64,16 @@ export default function AdminRent() {
               </div>
               <p className="font-heading font-bold mt-1">{r.name}</p>
               <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{r.description}</p>
-              <p className="text-sm font-bold text-amber-600 mt-2">{formatIDR(r.price_day)}/hari</p>
-              {r.allow_with_driver && <p className="text-xs text-muted-foreground">+sopir: {formatIDR(r.price_with_driver)}/hari</p>}
+              <div className="mt-2 text-xs space-y-0.5">
+                {r.price_day > 0 && <p className="text-amber-600 font-semibold">{formatIDR(r.price_day)}<span className="text-muted-foreground font-normal">/hari</span></p>}
+                {r.price_week > 0 && <p className="text-amber-600 font-semibold">{formatIDR(r.price_week)}<span className="text-muted-foreground font-normal">/minggu</span></p>}
+                {r.price_month > 0 && <p className="text-amber-600 font-semibold">{formatIDR(r.price_month)}<span className="text-muted-foreground font-normal">/bulan</span></p>}
+              </div>
+              {r.allow_with_driver && (
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  +sopir: {[r.price_with_driver_day && `${formatIDR(r.price_with_driver_day)}/hr`, r.price_with_driver_week && `${formatIDR(r.price_with_driver_week)}/mg`, r.price_with_driver_month && `${formatIDR(r.price_with_driver_month)}/bl`].filter(Boolean).join(" · ")}
+                </div>
+              )}
               <div className="flex items-center justify-between mt-2">
                 <span className={`text-xs font-semibold ${r.active ? "text-emerald-600" : "text-muted-foreground"}`}>{r.active ? "Aktif" : "Nonaktif"}</span>
                 <div className="flex gap-1">
@@ -91,17 +104,30 @@ export default function AdminRent() {
                 </select>
               </label>
               <F label="Deskripsi" v={form.description} on={(v) => setForm({ ...form, description: v })} testid="rf-desc" />
-              <F label="Harga / hari (Lepas Kunci)" type="number" v={form.price_day} on={(v) => setForm({ ...form, price_day: v })} testid="rf-price" />
+              <p className="text-xs font-medium text-muted-foreground mt-1">Tarif Lepas Kunci</p>
+              <div className="grid grid-cols-3 gap-2">
+                <F label="Per hari" type="number" v={form.price_day} on={(v) => setForm({ ...form, price_day: v })} testid="rf-price-day" />
+                <F label="Per minggu" type="number" v={form.price_week} on={(v) => setForm({ ...form, price_week: v })} testid="rf-price-week" />
+                <F label="Per bulan" type="number" v={form.price_month} on={(v) => setForm({ ...form, price_month: v })} testid="rf-price-month" />
+              </div>
               {form.type === "mobil" && (
                 <>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" data-testid="rf-driver-toggle" checked={!!form.allow_with_driver} onChange={(e) => setForm({ ...form, allow_with_driver: e.target.checked })} /> Sediakan opsi + Sopir
                   </label>
                   {form.allow_with_driver && (
-                    <F label="Harga / hari (Plus Sopir)" type="number" v={form.price_with_driver} on={(v) => setForm({ ...form, price_with_driver: v })} testid="rf-price-driver" />
+                    <>
+                      <p className="text-xs font-medium text-muted-foreground mt-1">Tarif Plus Sopir</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <F label="Per hari" type="number" v={form.price_with_driver_day} on={(v) => setForm({ ...form, price_with_driver_day: v })} testid="rf-pwd-day" />
+                        <F label="Per minggu" type="number" v={form.price_with_driver_week} on={(v) => setForm({ ...form, price_with_driver_week: v })} testid="rf-pwd-week" />
+                        <F label="Per bulan" type="number" v={form.price_with_driver_month} on={(v) => setForm({ ...form, price_with_driver_month: v })} testid="rf-pwd-month" />
+                      </div>
+                    </>
                   )}
                 </>
               )}
+              <p className="text-[11px] text-muted-foreground">Set 0 untuk durasi yang tidak ditawarkan.</p>
               <ImageUploader value={form.image} onChange={(v) => setForm({ ...form, image: v })} testid="rf-img" />
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> Aktif

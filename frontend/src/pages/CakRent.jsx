@@ -7,12 +7,18 @@ import { t } from "../lib/i18n";
 import { toast } from "sonner";
 import { Car, Bike, X } from "lucide-react";
 
+const DUR_LABELS = { day: "Harian", week: "Mingguan", month: "Bulanan" };
+const DUR_UNIT = { day: "hari", week: "minggu", month: "bulan" };
+const priceKey = (d, drv) => drv
+  ? ({ day: "price_with_driver_day", week: "price_with_driver_week", month: "price_with_driver_month" }[d])
+  : ({ day: "price_day", week: "price_week", month: "price_month" }[d]);
+
 export default function CakRent() {
   const { lang } = useApp();
   const [items, setItems] = useState([]);
   const [tab, setTab] = useState("mobil"); // mobil | motor
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ name: "", phone: "", start_date: "", days: 1, with_driver: false, notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", start_date: "", duration: "day", qty: 1, with_driver: false, notes: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState({ open: false, url: "" });
 
@@ -23,28 +29,36 @@ export default function CakRent() {
   const filtered = useMemo(() => items.filter((i) => i.type === tab), [items, tab]);
 
   const open = (r) => {
+    const firstDur = ["day", "week", "month"].find((d) => Number(r[priceKey(d, false)] || 0) > 0) || "day";
     setSelected(r);
-    setForm({ name: "", phone: "", start_date: new Date().toISOString().slice(0, 10), days: 1, with_driver: false, notes: "" });
+    setForm({ name: "", phone: "", start_date: new Date().toISOString().slice(0, 10), duration: firstDur, qty: 1, with_driver: false, notes: "" });
   };
   const close = () => setSelected(null);
 
-  const unitPrice = selected ? (form.with_driver && selected.allow_with_driver ? Number(selected.price_with_driver || 0) : Number(selected.price_day || 0)) : 0;
-  const total = unitPrice * Math.max(1, Number(form.days || 1));
+  const useDriver = selected ? !!(form.with_driver && selected.allow_with_driver) : false;
+  const unitPrice = selected ? Number(selected[priceKey(form.duration, useDriver)] || 0) : 0;
+  const total = unitPrice * Math.max(1, Number(form.qty || 1));
 
   const submit = async () => {
     if (!form.name || !form.phone || !form.start_date) {
       toast.error(t(lang, "fill_required"));
       return;
     }
+    if (unitPrice <= 0) {
+      toast.error("Tarif untuk pilihan ini belum diatur");
+      return;
+    }
     setLoading(true);
-    const opt = selected.type === "mobil" ? (form.with_driver ? "Plus Sopir" : "Lepas Kunci") : "Lepas Kunci";
-    const message = `Halo Admin CakJek,\nSaya mau sewa *CakRent*.\n\nNama: ${form.name}\nNo. HP: ${form.phone}\n\nKendaraan: ${selected.name} (${selected.type})\nOpsi: ${opt}\nHarga/hari: ${formatIDR(unitPrice)}\n\nTanggal mulai: ${form.start_date}\nDurasi: ${form.days} hari\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
+    const opt = selected.type === "mobil" ? (useDriver ? "Plus Sopir" : "Lepas Kunci") : "Lepas Kunci";
+    const durLabel = DUR_LABELS[form.duration];
+    const unit = DUR_UNIT[form.duration];
+    const message = `Halo Admin CakJek,\nSaya mau sewa *CakRent*.\n\nNama: ${form.name}\nNo. HP: ${form.phone}\n\nKendaraan: ${selected.name} (${selected.type})\nOpsi: ${opt}\nTarif: ${durLabel} - ${formatIDR(unitPrice)}/${unit}\n\nTanggal mulai: ${form.start_date}\nDurasi: ${form.qty} ${unit}\nCatatan: ${form.notes || "-"}\n\nTotal: ${formatIDR(total)}`;
     try {
       const r = await api.post("/orders", {
         service: "cakrent",
         customer_name: form.name,
         customer_phone: form.phone,
-        details: { rent_id: selected.id, vehicle: selected.name, type: selected.type, with_driver: !!(form.with_driver && selected.allow_with_driver), start_date: form.start_date, days: Number(form.days), notes: form.notes, unit_price: unitPrice },
+        details: { rent_id: selected.id, vehicle: selected.name, type: selected.type, with_driver: useDriver, duration: form.duration, qty: Number(form.qty), start_date: form.start_date, notes: form.notes, unit_price: unitPrice },
         total,
         message,
       });
@@ -53,6 +67,13 @@ export default function CakRent() {
     } catch (e) {
       toast.error(e?.response?.data?.detail || "Failed");
     } finally { setLoading(false); }
+  };
+
+  const teaser = (r) => {
+    if (r.price_day > 0) return { v: r.price_day, u: "hari" };
+    if (r.price_week > 0) return { v: r.price_week, u: "minggu" };
+    if (r.price_month > 0) return { v: r.price_month, u: "bulan" };
+    return null;
   };
 
   return (
@@ -70,26 +91,27 @@ export default function CakRent() {
           </div>
 
           <div className="space-y-3">
-            {filtered.map((r) => (
-              <button
-                key={r.id}
-                data-testid={`rent-${r.id}`}
-                onClick={() => open(r)}
-                className="w-full text-left flex gap-3 p-2 rounded-2xl hover:bg-secondary/50 transition active:scale-[0.99]"
-              >
-                {r.image ? <img src={r.image} alt={r.name} className="w-20 h-20 rounded-xl object-cover" /> : <div className="w-20 h-20 rounded-xl bg-secondary" />}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground">{r.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{r.description}</p>
-                  <div className="mt-1 flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-bold text-amber-600">{formatIDR(r.price_day)}<span className="text-[10px] text-muted-foreground font-medium">/hari</span></span>
-                    {r.allow_with_driver && r.price_with_driver > 0 && (
-                      <span className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-semibold">+sopir {formatIDR(r.price_with_driver)}</span>
-                    )}
+            {filtered.map((r) => {
+              const t0 = teaser(r);
+              return (
+                <button
+                  key={r.id}
+                  data-testid={`rent-${r.id}`}
+                  onClick={() => open(r)}
+                  className="w-full text-left flex gap-3 p-2 rounded-2xl hover:bg-secondary/50 transition active:scale-[0.99]"
+                >
+                  {r.image ? <img src={r.image} alt={r.name} className="w-20 h-20 rounded-xl object-cover" /> : <div className="w-20 h-20 rounded-xl bg-secondary" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-foreground">{r.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{r.description}</p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      {t0 && <span className="text-sm font-bold text-amber-600">Mulai {formatIDR(t0.v)}<span className="text-[10px] text-muted-foreground font-medium">/{t0.u}</span></span>}
+                      {r.allow_with_driver && <span className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-semibold">+sopir</span>}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
             {filtered.length === 0 && <p className="text-center text-muted-foreground text-sm py-8">Belum ada {tab} tersedia</p>}
           </div>
         </div>
@@ -106,32 +128,56 @@ export default function CakRent() {
             <h3 className="font-heading font-bold mt-3">{selected.name}</h3>
             <p className="text-xs text-muted-foreground">{selected.description}</p>
 
-            <div className="mt-4 space-y-2.5">
+            {selected.type === "mobil" && selected.allow_with_driver && (
+              <div className="mt-4">
+                <span className="text-xs font-medium text-muted-foreground">Opsi Sewa</span>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <button type="button" data-testid="rent-opt-self" onClick={() => setForm({ ...form, with_driver: false })} className={`py-2 rounded-xl text-xs font-semibold transition ${!form.with_driver ? "bg-amber-500 text-white" : "bg-secondary text-foreground"}`}>
+                    Lepas Kunci
+                  </button>
+                  <button type="button" data-testid="rent-opt-driver" onClick={() => setForm({ ...form, with_driver: true })} className={`py-2 rounded-xl text-xs font-semibold transition ${form.with_driver ? "bg-amber-500 text-white" : "bg-secondary text-foreground"}`}>
+                    + Sopir
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Duration tabs */}
+            <div className="mt-4">
+              <span className="text-xs font-medium text-muted-foreground">Pilih Durasi</span>
+              <div className="mt-1 grid grid-cols-3 gap-2">
+                {["day", "week", "month"].map((d) => {
+                  const price = Number(selected[priceKey(d, useDriver)] || 0);
+                  const disabled = price <= 0;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      disabled={disabled}
+                      data-testid={`rent-dur-${d}`}
+                      onClick={() => setForm({ ...form, duration: d, qty: 1 })}
+                      className={`py-2 rounded-xl text-xs font-semibold transition ${form.duration === d ? "bg-amber-500 text-white" : "bg-secondary text-foreground"} disabled:opacity-40 disabled:line-through disabled:cursor-not-allowed`}
+                    >
+                      {DUR_LABELS[d]}
+                      {!disabled && <div className="text-[10px] opacity-80 mt-0.5">{formatIDR(price)}</div>}
+                      {disabled && <div className="text-[10px] opacity-80 mt-0.5">N/A</div>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-2.5">
               <In label="Nama Lengkap" v={form.name} on={(v) => setForm({ ...form, name: v })} testid="rent-name" />
               <In label="No. HP / WhatsApp" v={form.phone} on={(v) => setForm({ ...form, phone: v })} testid="rent-phone" />
               <In label="Tanggal Mulai Sewa" type="date" v={form.start_date} on={(v) => setForm({ ...form, start_date: v })} testid="rent-date" />
-              <In label="Durasi (hari)" type="number" v={form.days} on={(v) => setForm({ ...form, days: v })} testid="rent-days" />
-
-              {selected.type === "mobil" && selected.allow_with_driver && (
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">Opsi Sewa</span>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    <button type="button" data-testid="rent-opt-self" onClick={() => setForm({ ...form, with_driver: false })} className={`py-2 rounded-xl text-xs font-semibold transition ${!form.with_driver ? "bg-amber-500 text-white" : "bg-secondary text-foreground"}`}>
-                      Lepas Kunci<br /><span className="text-[10px] opacity-80">{formatIDR(selected.price_day)}/hari</span>
-                    </button>
-                    <button type="button" data-testid="rent-opt-driver" onClick={() => setForm({ ...form, with_driver: true })} className={`py-2 rounded-xl text-xs font-semibold transition ${form.with_driver ? "bg-amber-500 text-white" : "bg-secondary text-foreground"}`}>
-                      + Sopir<br /><span className="text-[10px] opacity-80">{formatIDR(selected.price_with_driver)}/hari</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
+              <In label={`Jumlah ${DUR_UNIT[form.duration]}`} type="number" v={form.qty} on={(v) => setForm({ ...form, qty: v })} testid="rent-qty" />
               <In label="Catatan" v={form.notes} on={(v) => setForm({ ...form, notes: v })} testid="rent-notes" />
             </div>
 
             <div className="border-t border-border mt-4 pt-3 flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">{form.days} hari × {formatIDR(unitPrice)}</p>
+                <p className="text-xs text-muted-foreground">{form.qty} {DUR_UNIT[form.duration]} × {formatIDR(unitPrice)}</p>
                 <p className="font-heading text-lg font-bold" data-testid="rent-total">{formatIDR(total)}</p>
               </div>
               <button disabled={loading} onClick={submit} data-testid="rent-book-btn" className="bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold px-5 py-2.5 rounded-full transition active:scale-95 disabled:opacity-60">

@@ -1,0 +1,43 @@
+{
+  "summary": "Tested 3-tier duration pricing (Harian/Mingguan/Bulanan) for CakKost and CakRent across backend + frontend. Backend pytest: 27/28 pass (test_cakapp.py legacy 15 + test_cakapp_new_features.py 12/13). Only failing test: motor admin endpoint does not enforce allow_with_driver=False / zero out price_with_driver_* fields when admin sends them — backend accepts and persists driver fields on a motor. Frontend: 100% pass on all flows: CakKost 3 duration tabs render with correct seeded prices (50k/280k/850k), switching tab updates unit + resets qty, qty=2 weekly => Rp 560.000 total, booking submits. CakRent mobil Avanza shows Opsi Sewa + 3 duration tabs, +Sopir bulanan qty=1 => Rp 12.000.000 (matches price_with_driver_month). CakRent motor Honda Beat: NO driver option shown (correct), 3 duration tabs show motor prices. Admin /admin/kost: 3 price inputs (kf-price-day/week/month) present, save reflects all 3 in card. Admin /admin/rent mobil: rf-driver-toggle present, 6 price inputs (rf-price-day/week/month + rf-pwd-day/week/month) all present, save works. Admin /admin/rent motor: rf-driver-toggle AND rf-pwd-* inputs hidden (correct). Admin/admin credentials intact at end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST/PUT /api/admin/rent",
+        "issue": "When type='motor' is sent with allow_with_driver=true and price_with_driver_day/week/month>0, backend stores them as-is instead of forcing allow_with_driver=false and zeroing price_with_driver_*. Spec (review_request bullet 4) requires backend enforcement. Current behavior relies on frontend hiding the toggle for motors, so via API/curl a motor with driver flag can be created. RECOMMENDED FIX in server.py admin_create_rent/admin_update_rent: if payload.type == 'motor': payload.allow_with_driver = False; payload.price_with_driver_day = 0; payload.price_with_driver_week = 0; payload.price_with_driver_month = 0."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cakapp.py",
+    "/app/backend/tests/test_cakapp_new_features.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/pytest_new_features.xml"
+  ],
+  "action_items": [
+    "Enforce motor type rules in backend admin_create_rent / admin_update_rent: force allow_with_driver=False and price_with_driver_* = 0 when type=='motor' (server.py lines ~459-468). Then test_admin_rent_motor_zeroes_driver_prices will pass."
+  ],
+  "critical_code_review_comments": [
+    "server.py admin_create_rent and admin_update_rent do not enforce motor business rule despite review_request explicitly requiring it. Easy 4-line fix.",
+    "/api/orders accepts service='cakkost'/'cakrent' with arbitrary details dict — no server-side validation that details.duration is one of day/week/month or that details.unit_price matches the persisted kost/rent price. Could allow client-side total tampering.",
+    "server.py is now 700 lines — refactor into routers (routes/kost.py, routes/rent.py, routes/order.py) recommended per code review guideline.",
+    "Admin tokens still in-memory _active_tokens set (lost on backend restart). Documented previously; not blocking MVP.",
+    "AdminRent form: when user switches type from mobil->motor in the same modal, the previously-entered price_with_driver_* state values are not cleared client-side, only hidden. Combined with the missing backend enforcement, a stale value could be sent on save. Frontend should also reset those fields on type change."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cakapp_new_features.py (rewritten for 3-tier pricing: 13 tests total covering 3-tier kost prices, 6-price mobil, motor zero-out spec, weekly/monthly order totals, legacy migration sanity)"
+  ],
+  "success_rate": {"backend": "96% (27/28)", "frontend": "100% (12/12 assertions)"},
+  "test_credentials": "Admin: username=admin, password=admin (verified at end).",
+  "seed_data_creation": "All TEST_ items created during tests were cleaned up. NOTE: My initial UI cleanup query incorrectly deleted seeded 'Kost Melati No. 7' because querySelector on a parent element returned the first del-k-* button. I manually restored Kost Melati No. 7 via admin API with original seed prices (50000/280000/850000). Final state verified: 3 kost (Melati, Putra Bahagia, Putri Anggrek), 4 rent (Honda Beat, Yamaha NMAX, Toyota Avanza, Daihatsu Xenia).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression tests now expect 3-tier pricing. test_cakapp_new_features.py auto-loads REACT_APP_BACKEND_URL from /app/frontend/.env if env var unset. Testids confirmed for new flow: CakKost: kost-{id}, kost-dur-{day|week|month}, kost-name, kost-phone, kost-date, kost-qty, kost-total, kost-book-btn, kost-form-close. CakRent: rent-tab-{mobil|motor}, rent-{id}, rent-opt-{self|driver} (only for mobil/allow_with_driver), rent-dur-{day|week|month}, rent-name/phone/date/qty/total/book-btn/form-close. AdminKost: kf-name, kf-addr, kf-fac, kf-desc, kf-price-day/week/month, kf-img, kf-save. AdminRent: rf-name, rf-type (select), rf-desc, rf-driver-toggle (mobil only), rf-price-day/week/month, rf-pwd-day/week/month (mobil+toggle on), rf-img-pick, rf-img, rf-save. One known backend bug: motor admin create/update doesn't enforce zero driver prices (the failing test test_admin_rent_motor_zeroes_driver_prices documents the expected behavior). To delete a specific row in admin UI, use page.evaluate that walks card containers from leaves up to find the one whose innerText contains the target name AND whose querySelector returns a del-x button scoped to that card — do NOT querySelector('*') broadly or it will return the first card's button.",
+  "rca of the issue": "test_admin_rent_motor_zeroes_driver_prices fails because server.py:459-468 admin_create_rent passes the full RentCreate payload to Rent() without any motor-specific normalization. Repro: POST /api/admin/rent with {type:'motor', allow_with_driver:true, price_with_driver_day:200000, ...} -> response echoes allow_with_driver:true and price_with_driver_day:200000. Mitigation: in admin_create_rent and admin_update_rent, after payload.model_dump(), if data['type']=='motor': data['allow_with_driver']=False; for k in ('price_with_driver_day','price_with_driver_week','price_with_driver_month'): data[k]=0. Then instantiate Rent(**data)."
+}
