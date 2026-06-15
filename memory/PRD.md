@@ -17,6 +17,16 @@ Setiap pemesanan langsung masuk ke WhatsApp admin otomatis terketik pilihannya."
 - End-user (no login): orders services on mobile web.
 - Admin: manages menus, tariffs, settings, views reports.
 
+## Implemented (2026-02-16)
+- **Home: CakPay balance hardcoded to "Rp 0"** (data-testid `cakpay-balance`).
+- **Home: % button now navigates to `/promo`** (data-testid `home-promo-btn`).
+- **Promo Page (`/promo`)** — public page listing banner/promo as cards. Shows title, subtitle, description, kode, link tujuan, gambar, gradient color, date range. Empty state if no banners.
+- **Banner schema extended** with `description` + `link` fields; AdminBanners form updated (data-testid `bf-desc`, `bf-link`).
+- **Service Toggles (Menu Aktif/Nonaktif)** — `GET /api/services` (public) returns toggle map; `PUT /api/admin/services` (admin) updates. Stored in `app_config` doc id=`service_toggles`. Default all true.
+- **AdminServices page (`/admin/services`)** — toggle UI for 8 service menus. Saved toggles drive Home rendering.
+- **Home menu grid** is 4 cols × 2 rows; deactivated services rendered with grayscale icon, muted label, "Coming Soon" badge, and are non-clickable (rendered as `<div>` with `pointer-events-none`).
+- AdminLayout nav: added "Menu Layanan" entry pointing to `/admin/services`.
+
 ## Implemented (2026-02-15)
 - Admin Tariff: tambah field "Cakmart (Flat)" delivery fee.
 - ImageUploader (Base64, client-side resize max 800px) terintegrasi di Admin Merchants (Cakfood) dan Admin Menu (Cakfood/Cakmart/Cakpay) menggantikan input URL.
