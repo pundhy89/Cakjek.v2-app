@@ -20,6 +20,11 @@ Setiap pemesanan langsung masuk ke WhatsApp admin otomatis terketik pilihannya."
 ## Implemented (2026-02-15)
 - Admin Tariff: tambah field "Cakmart (Flat)" delivery fee.
 - ImageUploader (Base64, client-side resize max 800px) terintegrasi di Admin Merchants (Cakfood) dan Admin Menu (Cakfood/Cakmart/Cakpay) menggantikan input URL.
+- **Admin Credentials Change** — endpoint `PUT /api/admin/credentials` + form di `/admin/settings`. Username/password admin sekarang di-persist di MongoDB (`admin_creds`).
+- **Admin Login Back Button** — tombol "Beranda" di kiri-atas halaman login admin.
+- **CakKost** — service baru: list kost (level 1, no parent), booking dengan tanggal mulai sewa + durasi bulan, checkout WhatsApp. Admin CRUD di `/admin/kost`. Endpoint: `/api/kost`, `/api/admin/kost`.
+- **CakRent** — service baru: sewa mobil/motor per hari, mobil punya opsi "lepas kunci" atau "+sopir" (harga berbeda). Tab filter mobil/motor. Booking dengan tanggal mulai + durasi hari. Admin CRUD di `/admin/rent`. Endpoint: `/api/rent`, `/api/admin/rent`.
+- Home grid sekarang 8 layanan (CakKost + CakRent ditambahkan).
 
 ## Implemented (2026-02-12)
 - Home with 6 services + promo banner.
