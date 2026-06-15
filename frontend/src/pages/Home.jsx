@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bike, Car, Utensils, Package, ShoppingBag, Wallet, Shield, Search, Bell, Percent, Plus, Send } from "lucide-react";
+import { Bike, Car, Utensils, Package, ShoppingBag, Wallet, Shield, Search, Bell, Percent, Plus, Send, Building2, KeyRound } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { t } from "../lib/i18n";
 import BannerCarousel from "../components/BannerCarousel";
@@ -13,6 +13,8 @@ const services = [
   { key: "cakmart", path: "/cakmart", icon: ShoppingBag, color: "text-teal-500" },
   { key: "caksend", path: "/caksend", icon: Package, color: "text-violet-500", badge: "Baru" },
   { key: "cakpay", path: "/cakpay", icon: Wallet, color: "text-orange-500" },
+  { key: "cakkost", path: "/cakkost", icon: Building2, color: "text-emerald-500", badge: "Baru" },
+  { key: "cakrent", path: "/cakrent", icon: KeyRound, color: "text-amber-500", badge: "Baru" },
 ];
 
 export default function Home() {

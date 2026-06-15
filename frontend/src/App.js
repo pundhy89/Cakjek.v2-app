@@ -25,6 +25,10 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminMerchants from "./pages/admin/AdminMerchants";
+import AdminKost from "./pages/admin/AdminKost";
+import AdminRent from "./pages/admin/AdminRent";
+import CakKost from "./pages/CakKost";
+import CakRent from "./pages/CakRent";
 
 function App() {
   return (
@@ -41,6 +45,8 @@ function App() {
             <Route path="/caksend" element={<Caksend />} />
             <Route path="/cakmart" element={<Cakmart />} />
             <Route path="/cakpay" element={<Cakpay />} />
+            <Route path="/cakkost" element={<CakKost />} />
+            <Route path="/cakrent" element={<CakRent />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/account" element={<Account />} />
             <Route path="/chat" element={<Chat />} />
@@ -53,6 +59,8 @@ function App() {
             <Route path="merchants" element={<AdminMerchants />} />
             <Route path="mart" element={<AdminMenu category="mart" />} />
             <Route path="cakpay" element={<AdminMenu category="cakpay" />} />
+            <Route path="kost" element={<AdminKost />} />
+            <Route path="rent" element={<AdminRent />} />
             <Route path="tariff" element={<AdminTariff />} />
             <Route path="banners" element={<AdminBanners />} />
             <Route path="reports" element={<AdminReports />} />

@@ -96,6 +96,72 @@ export default function AdminSettings() {
       <div className="mt-6">
         <button data-testid="setting-save" onClick={save} className="bg-primary text-primary-foreground px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 active:scale-95 transition">{t(lang, "save")}</button>
       </div>
+
+      <CredentialsCard />
+    </div>
+  );
+}
+
+function CredentialsCard() {
+  const [form, setForm] = useState({ current_password: "", new_username: "", new_password: "", confirm: "" });
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (!form.current_password || !form.new_username || !form.new_password) {
+      toast.error("Lengkapi semua kolom");
+      return;
+    }
+    if (form.new_password !== form.confirm) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+    if (form.new_password.length < 4) {
+      toast.error("Password baru minimal 4 karakter");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.put("/admin/credentials", {
+        current_password: form.current_password,
+        new_username: form.new_username,
+        new_password: form.new_password,
+      });
+      toast.success("Username & password berhasil diubah. Silakan login ulang.");
+      setForm({ current_password: "", new_username: "", new_password: "", confirm: "" });
+      setTimeout(() => {
+        localStorage.removeItem("cak_admin_token");
+        window.location.href = "/admin/login";
+      }, 1500);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Gagal mengubah kredensial");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div data-testid="admin-creds-card" className="mt-8 bg-card rounded-3xl border border-black/5 dark:border-white/10 p-6 shadow-sm max-w-xl">
+      <h2 className="font-heading font-bold">Ganti Username & Password Admin</h2>
+      <p className="text-xs text-muted-foreground mt-1">Setelah berhasil, sistem akan logout otomatis dan minta login ulang.</p>
+      <div className="mt-4 space-y-3">
+        <label className="block">
+          <span className="text-xs text-muted-foreground font-medium">Password Lama</span>
+          <input data-testid="creds-current" type="password" value={form.current_password} onChange={(e) => setForm({ ...form, current_password: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted-foreground font-medium">Username Baru</span>
+          <input data-testid="creds-new-username" value={form.new_username} onChange={(e) => setForm({ ...form, new_username: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted-foreground font-medium">Password Baru</span>
+          <input data-testid="creds-new-password" type="password" value={form.new_password} onChange={(e) => setForm({ ...form, new_password: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted-foreground font-medium">Konfirmasi Password Baru</span>
+          <input data-testid="creds-confirm" type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="mt-1 w-full bg-secondary rounded-xl px-3 py-2 text-sm outline-none" />
+        </label>
+        <button data-testid="creds-save" onClick={submit} disabled={busy} className="bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 active:scale-95 transition disabled:opacity-60">
+          {busy ? "Menyimpan..." : "Simpan Kredensial"}
+        </button>
+      </div>
     </div>
   );
 }

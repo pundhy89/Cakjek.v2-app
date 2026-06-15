@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Utensils, ShoppingBag, Wallet, Map, BarChart3, Settings, LogOut, Receipt, Image, Store } from "lucide-react";
+import { LayoutDashboard, Utensils, ShoppingBag, Wallet, Map, BarChart3, Settings, LogOut, Receipt, Image, Store, Building2, KeyRound } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { t } from "../../lib/i18n";
 import { api } from "../../lib/api";
@@ -27,6 +27,8 @@ export default function AdminLayout() {
     { to: "/admin/food", icon: Utensils, label: t(lang, "food_menu") },
     { to: "/admin/mart", icon: ShoppingBag, label: t(lang, "mart_items") },
     { to: "/admin/cakpay", icon: Wallet, label: t(lang, "cakpay_packages") },
+    { to: "/admin/kost", icon: Building2, label: "CakKost" },
+    { to: "/admin/rent", icon: KeyRound, label: "CakRent" },
     { to: "/admin/tariff", icon: Map, label: t(lang, "tariff") },
     { to: "/admin/banners", icon: Image, label: "Banner Promo" },
     { to: "/admin/reports", icon: BarChart3, label: t(lang, "reports") },

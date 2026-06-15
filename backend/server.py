@@ -126,12 +126,63 @@ class BannerCreate(BaseModel):
     end_date: Optional[str] = None
 
 class OrderCreate(BaseModel):
-    service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay
+    service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay|cakkost|cakrent
     customer_name: str
     customer_phone: str
     details: dict  # service-specific
     total: float
     message: str  # whatsapp text
+
+class Kost(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    address: str = ""
+    description: str = ""
+    facilities: str = ""  # comma-separated, e.g., "AC, WiFi, Kamar mandi dalam"
+    price_month: float = 0
+    image: str = ""
+    available: bool = True
+    active: bool = True
+
+class KostCreate(BaseModel):
+    name: str
+    address: Optional[str] = ""
+    description: Optional[str] = ""
+    facilities: Optional[str] = ""
+    price_month: Optional[float] = 0
+    image: Optional[str] = ""
+    available: Optional[bool] = True
+    active: Optional[bool] = True
+
+class Rent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: str = "mobil"  # mobil | motor
+    description: str = ""
+    image: str = ""
+    price_day: float = 0  # tanpa sopir / lepas kunci (untuk motor ini default)
+    price_with_driver: float = 0  # khusus mobil: harga sewa + sopir per hari
+    allow_with_driver: bool = False  # khusus mobil
+    available: bool = True
+    active: bool = True
+
+class RentCreate(BaseModel):
+    name: str
+    type: Optional[str] = "mobil"
+    description: Optional[str] = ""
+    image: Optional[str] = ""
+    price_day: Optional[float] = 0
+    price_with_driver: Optional[float] = 0
+    allow_with_driver: Optional[bool] = False
+    available: Optional[bool] = True
+    active: Optional[bool] = True
+
+class AdminCredsUpdate(BaseModel):
+    current_password: str
+    new_username: str
+    new_password: str
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -146,9 +197,16 @@ class Order(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # ---------- Auth ----------
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin"
+DEFAULT_ADMIN_USERNAME = "admin"
+DEFAULT_ADMIN_PASSWORD = "admin"
 _active_tokens: set = set()
+
+async def _get_admin_creds():
+    doc = await db.admin_creds.find_one({"id": "admin"}, {"_id": 0})
+    if not doc:
+        doc = {"id": "admin", "username": DEFAULT_ADMIN_USERNAME, "password": DEFAULT_ADMIN_PASSWORD}
+        await db.admin_creds.insert_one(doc)
+    return doc
 
 def haversine_km(lat1, lon1, lat2, lon2):
     R = 6371.0
@@ -181,7 +239,8 @@ def require_admin(authorization: Optional[str] = Header(None)):
 
 @api_router.post("/admin/login")
 async def admin_login(req: LoginReq):
-    if req.username == ADMIN_USERNAME and req.password == ADMIN_PASSWORD:
+    creds = await _get_admin_creds()
+    if req.username == creds["username"] and req.password == creds["password"]:
         token = secrets.token_urlsafe(24)
         _active_tokens.add(token)
         return {"token": token, "username": req.username}
@@ -189,7 +248,26 @@ async def admin_login(req: LoginReq):
 
 @api_router.get("/admin/me")
 async def admin_me(_: str = Depends(require_admin)):
-    return {"ok": True, "username": ADMIN_USERNAME}
+    creds = await _get_admin_creds()
+    return {"ok": True, "username": creds["username"]}
+
+@api_router.put("/admin/credentials")
+async def admin_update_creds(payload: AdminCredsUpdate, _: str = Depends(require_admin)):
+    creds = await _get_admin_creds()
+    if payload.current_password != creds["password"]:
+        raise HTTPException(400, "Password lama salah")
+    new_username = (payload.new_username or "").strip()
+    new_password = (payload.new_password or "").strip()
+    if not new_username or not new_password:
+        raise HTTPException(400, "Username dan password baru wajib diisi")
+    if len(new_password) < 4:
+        raise HTTPException(400, "Password minimal 4 karakter")
+    await db.admin_creds.update_one(
+        {"id": "admin"},
+        {"$set": {"username": new_username, "password": new_password}},
+        upsert=True,
+    )
+    return {"ok": True, "username": new_username}
 
 # ---------- Settings ----------
 @api_router.get("/settings")
@@ -323,6 +401,61 @@ async def admin_list_orders(_: str = Depends(require_admin)):
 @api_router.put("/admin/orders/{order_id}/status")
 async def admin_update_order_status(order_id: str, status: str, _: str = Depends(require_admin)):
     await db.orders.update_one({"id": order_id}, {"$set": {"status": status}})
+    return {"ok": True}
+
+# ---------- CakKost ----------
+@api_router.get("/kost")
+async def list_kost():
+    items = await db.kost.find({"active": True}, {"_id": 0}).to_list(500)
+    return items
+
+@api_router.get("/admin/kost")
+async def admin_list_kost(_: str = Depends(require_admin)):
+    return await db.kost.find({}, {"_id": 0}).to_list(500)
+
+@api_router.post("/admin/kost")
+async def admin_create_kost(payload: KostCreate, _: str = Depends(require_admin)):
+    k = Kost(**payload.model_dump())
+    await db.kost.insert_one(k.model_dump())
+    return k.model_dump()
+
+@api_router.put("/admin/kost/{kid}")
+async def admin_update_kost(kid: str, payload: KostCreate, _: str = Depends(require_admin)):
+    await db.kost.update_one({"id": kid}, {"$set": payload.model_dump()})
+    return await db.kost.find_one({"id": kid}, {"_id": 0})
+
+@api_router.delete("/admin/kost/{kid}")
+async def admin_delete_kost(kid: str, _: str = Depends(require_admin)):
+    await db.kost.delete_one({"id": kid})
+    return {"ok": True}
+
+# ---------- CakRent ----------
+@api_router.get("/rent")
+async def list_rent(type: Optional[str] = None):
+    q = {"active": True}
+    if type:
+        q["type"] = type
+    items = await db.rent.find(q, {"_id": 0}).to_list(500)
+    return items
+
+@api_router.get("/admin/rent")
+async def admin_list_rent(_: str = Depends(require_admin)):
+    return await db.rent.find({}, {"_id": 0}).to_list(500)
+
+@api_router.post("/admin/rent")
+async def admin_create_rent(payload: RentCreate, _: str = Depends(require_admin)):
+    r = Rent(**payload.model_dump())
+    await db.rent.insert_one(r.model_dump())
+    return r.model_dump()
+
+@api_router.put("/admin/rent/{rid}")
+async def admin_update_rent(rid: str, payload: RentCreate, _: str = Depends(require_admin)):
+    await db.rent.update_one({"id": rid}, {"$set": payload.model_dump()})
+    return await db.rent.find_one({"id": rid}, {"_id": 0})
+
+@api_router.delete("/admin/rent/{rid}")
+async def admin_delete_rent(rid: str, _: str = Depends(require_admin)):
+    await db.rent.delete_one({"id": rid})
     return {"ok": True}
 
 # ---------- Reports ----------
@@ -492,6 +625,27 @@ async def seed():
         food_docs = await db.menu.find({"category": "food", "merchant_id": None}, {"_id": 0}).to_list(200)
         for i, f in enumerate(food_docs):
             await db.menu.update_one({"id": f["id"]}, {"$set": {"merchant_id": ids[i % len(ids)]}})
+    # CakKost
+    if await db.kost.count_documents({}) == 0:
+        klist = [
+            {"name": "Kost Melati No. 7", "address": "Jl. Melati 7, Surabaya", "description": "Dekat kampus, lingkungan tenang.", "facilities": "AC, WiFi, Kamar mandi dalam, Parkir motor", "price_month": 850000, "image": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=600"},
+            {"name": "Kost Putra Bahagia", "address": "Jl. Diponegoro 22", "description": "Khusus putra, dekat pasar.", "facilities": "Kipas angin, WiFi, Dapur bersama", "price_month": 650000, "image": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600"},
+            {"name": "Kost Putri Anggrek", "address": "Jl. Anggrek 14", "description": "Khusus putri, ada CCTV.", "facilities": "AC, WiFi, KM dalam, Laundry", "price_month": 1200000, "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"},
+        ]
+        for k in klist:
+            await db.kost.insert_one(Kost(**k).model_dump())
+    # CakRent
+    if await db.rent.count_documents({}) == 0:
+        rlist = [
+            {"name": "Honda Beat 2022", "type": "motor", "description": "Motor matic irit, helm 2 disediakan.", "price_day": 75000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600"},
+            {"name": "Yamaha NMAX 2023", "type": "motor", "description": "Matic premium, nyaman jarak jauh.", "price_day": 150000, "allow_with_driver": False, "image": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600"},
+            {"name": "Toyota Avanza 2022", "type": "mobil", "description": "MPV 7 penumpang, bensin penuh.", "price_day": 350000, "price_with_driver": 550000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600"},
+            {"name": "Daihatsu Xenia 2021", "type": "mobil", "description": "Irit BBM, AC dingin.", "price_day": 325000, "price_with_driver": 525000, "allow_with_driver": True, "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600"},
+        ]
+        for r in rlist:
+            await db.rent.insert_one(Rent(**r).model_dump())
+    # Banners
+    if await db.banners.count_documents({}) == 0:
         bdefaults = [
             {"title": "Diskon 40% semua layanan!", "subtitle": "Berlaku untuk pelanggan baru", "code": "CAKJEK", "color_from": "#fb923c", "color_to": "#ec4899", "order_idx": 0},
             {"title": "Gratis ongkir Cakfood", "subtitle": "Minimum belanja Rp 30.000", "code": "FREEONGKIR", "color_from": "#10b981", "color_to": "#06b6d4", "order_idx": 1},

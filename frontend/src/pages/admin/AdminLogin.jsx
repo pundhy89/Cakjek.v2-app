@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useApp } from "../../context/AppContext";
 import { t } from "../../lib/i18n";
 import { toast } from "sonner";
-import { Shield } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 
 export default function AdminLogin() {
   const { lang, setAdmin } = useApp();
@@ -29,6 +29,13 @@ export default function AdminLogin() {
 
   return (
     <div data-testid="admin-login-page" className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-950 to-black flex items-center justify-center p-6">
+      <Link
+        to="/"
+        data-testid="admin-login-back"
+        className="absolute top-5 left-5 inline-flex items-center gap-1.5 text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 rounded-full px-3 py-1.5 text-xs font-semibold transition"
+      >
+        <ArrowLeft size={14} /> Beranda
+      </Link>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center mb-3 shadow-lg shadow-blue-500/30">
