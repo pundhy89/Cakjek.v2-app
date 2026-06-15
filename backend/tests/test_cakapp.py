@@ -4,7 +4,7 @@ import pytest
 import requests
 from urllib.parse import quote
 
-BASE = os.environ.get("REACT_APP_BACKEND_URL", "https://bug-repair-15.preview.emergentagent.com").rstrip("/")
+BASE = os.environ.get("REACT_APP_BACKEND_URL", "https://repo-import-51.preview.emergentagent.com").rstrip("/")
 API = f"{BASE}/api"
 
 
