@@ -104,6 +104,8 @@ class Banner(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     subtitle: str = ""
+    description: str = ""
+    link: str = ""
     code: str = ""
     color_from: str = "#fb923c"
     color_to: str = "#ec4899"
@@ -116,6 +118,8 @@ class Banner(BaseModel):
 class BannerCreate(BaseModel):
     title: str
     subtitle: Optional[str] = ""
+    description: Optional[str] = ""
+    link: Optional[str] = ""
     code: Optional[str] = ""
     color_from: Optional[str] = "#fb923c"
     color_to: Optional[str] = "#ec4899"
@@ -124,6 +128,9 @@ class BannerCreate(BaseModel):
     active: Optional[bool] = True
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+
+class ServiceTogglesUpdate(BaseModel):
+    services: dict  # { "cakride": true, "cakcar": false, ... }
 
 class OrderCreate(BaseModel):
     service: str  # cakride|cakcar|cakfood|caksend|cakmart|cakpay|cakkost|cakrent
@@ -570,6 +577,46 @@ async def admin_update_banner(banner_id: str, payload: BannerCreate, _: str = De
 async def admin_delete_banner(banner_id: str, _: str = Depends(require_admin)):
     await db.banners.delete_one({"id": banner_id})
     return {"ok": True}
+
+# ---------- Service Toggles ----------
+DEFAULT_SERVICE_TOGGLES = {
+    "cakride": True,
+    "cakcar": True,
+    "cakfood": True,
+    "cakmart": True,
+    "caksend": True,
+    "cakpay": True,
+    "cakkost": True,
+    "cakrent": True,
+}
+
+async def _get_service_toggles():
+    doc = await db.app_config.find_one({"id": "service_toggles"}, {"_id": 0})
+    if not doc:
+        doc = {"id": "service_toggles", "services": DEFAULT_SERVICE_TOGGLES}
+        await db.app_config.insert_one(doc)
+    # ensure all known keys exist (in case we add more services later)
+    services = {**DEFAULT_SERVICE_TOGGLES, **(doc.get("services") or {})}
+    return services
+
+@api_router.get("/services")
+async def get_services():
+    return await _get_service_toggles()
+
+@api_router.put("/admin/services")
+async def admin_update_services(payload: ServiceTogglesUpdate, _: str = Depends(require_admin)):
+    current = await _get_service_toggles()
+    # only allow toggles for known service keys, coerce to bool
+    updated = dict(current)
+    for k, v in (payload.services or {}).items():
+        if k in DEFAULT_SERVICE_TOGGLES:
+            updated[k] = bool(v)
+    await db.app_config.update_one(
+        {"id": "service_toggles"},
+        {"$set": {"services": updated}},
+        upsert=True,
+    )
+    return updated
 
 # ---------- Seed ----------
 async def seed():

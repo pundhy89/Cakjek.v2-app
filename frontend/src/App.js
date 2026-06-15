@@ -29,6 +29,8 @@ import AdminKost from "./pages/admin/AdminKost";
 import AdminRent from "./pages/admin/AdminRent";
 import CakKost from "./pages/CakKost";
 import CakRent from "./pages/CakRent";
+import Promo from "./pages/Promo";
+import AdminServices from "./pages/admin/AdminServices";
 
 function App() {
   return (
@@ -47,6 +49,7 @@ function App() {
             <Route path="/cakpay" element={<Cakpay />} />
             <Route path="/cakkost" element={<CakKost />} />
             <Route path="/cakrent" element={<CakRent />} />
+            <Route path="/promo" element={<Promo />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/account" element={<Account />} />
             <Route path="/chat" element={<Chat />} />
@@ -63,6 +66,7 @@ function App() {
             <Route path="rent" element={<AdminRent />} />
             <Route path="tariff" element={<AdminTariff />} />
             <Route path="banners" element={<AdminBanners />} />
+            <Route path="services" element={<AdminServices />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
