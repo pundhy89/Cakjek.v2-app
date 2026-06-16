@@ -49,6 +49,10 @@ const Akun: React.FC = () => {
               placeholder="Masukkan nama kamu..."
               className="input-field"
             />
+            <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+              <span>ℹ️</span>
+              <span>Nama profil akan otomatis terisi di kolom pemesan saat memesan layanan.</span>
+            </p>
           </div>
           <button
             onClick={handleSave}

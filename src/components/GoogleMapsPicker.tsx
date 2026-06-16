@@ -1,86 +1,115 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapPin, Navigation, Search, X } from 'lucide-react';
-import { reverseGeocode, searchAddress, GMAPS_EMBED_KEY } from '@/lib/api';
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { MapPin, Navigation, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Coords } from '@/types/index';
 
-interface GoogleMapsPickerProps {
+// Fix default marker icons for Leaflet bundled with Vite
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIconUrl,
+  iconRetinaUrl: markerIcon2xUrl,
+  shadowUrl: markerShadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+interface LeafletMapPickerProps {
   label: string;
   value?: Coords & { address?: string };
   onChange: (val: Coords & { address: string }) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GMaps = any;
+const NOMINATIM = 'https://nominatim.openstreetmap.org';
 
-const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onChange }) => {
+async function nominatimSearch(q: string): Promise<{ label: string; lat: number; lng: number }[]> {
+  try {
+    const res = await fetch(
+      `${NOMINATIM}/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=id&addressdetails=1`,
+      { headers: { 'Accept-Language': 'id', 'User-Agent': 'CakJekApp/1.0' } }
+    );
+    const data = await res.json();
+    return data.map((d: { display_name: string; lat: string; lon: string }) => ({
+      label: d.display_name,
+      lat: parseFloat(d.lat),
+      lng: parseFloat(d.lon),
+    }));
+  } catch { return []; }
+}
+
+async function nominatimReverse(lat: number, lng: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `${NOMINATIM}/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { 'Accept-Language': 'id', 'User-Agent': 'CakJekApp/1.0' } }
+    );
+    const data = await res.json();
+    return data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+}
+
+const LeafletMapPicker: React.FC<LeafletMapPickerProps> = ({ label, value, onChange }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<GMaps>(null);
-  const markerRef = useRef<GMaps>(null);
-  const [query, setQuery] = useState('');
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const [query, setQuery] = useState(value?.address ?? '');
   const [suggestions, setSuggestions] = useState<{ label: string; lat: number; lng: number }[]>([]);
   const [searching, setSearching] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const getG = (): GMaps => (window as GMaps).google;
+  // Init map once expanded
+  useEffect(() => {
+    if (!expanded || !mapRef.current || mapInstanceRef.current) return;
 
-  const initMap = useCallback(() => {
-    if (!mapRef.current || !getG()) return;
-    const g = getG();
-    const center = value?.lat ? { lat: value.lat, lng: value.lng } : { lat: -7.2575, lng: 112.7521 };
-    const map = new g.maps.Map(mapRef.current, {
-      center, zoom: 14,
-      disableDefaultUI: true, zoomControl: true, clickableIcons: false,
-      mapId: 'cakjek_map',
-    });
-    mapInstanceRef.current = map;
+    const center: L.LatLngTuple = value?.lat ? [value.lat, value.lng] : [-7.2575, 112.7521];
+    const map = L.map(mapRef.current, { zoomControl: true }).setView(center, 14);
 
-    const placeMarker = (pos: GMaps) => {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    if (value?.lat) {
+      markerRef.current = L.marker([value.lat, value.lng], { draggable: true }).addTo(map);
+      markerRef.current.on('dragend', async () => {
+        const pos = markerRef.current!.getLatLng();
+        const address = await nominatimReverse(pos.lat, pos.lng);
+        setQuery(address);
+        onChange({ lat: pos.lat, lng: pos.lng, address });
+      });
+    }
+
+    map.on('click', async (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng;
       if (markerRef.current) {
-        if ('position' in markerRef.current) markerRef.current.position = pos;
-        else markerRef.current.setPosition(pos);
+        markerRef.current.setLatLng([lat, lng]);
       } else {
-        try {
-          markerRef.current = new g.maps.marker.AdvancedMarkerElement({ map, position: pos });
-        } catch {
-          markerRef.current = new g.maps.Marker({ map, position: pos });
-        }
+        markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(map);
+        markerRef.current.on('dragend', async () => {
+          const pos = markerRef.current!.getLatLng();
+          const address = await nominatimReverse(pos.lat, pos.lng);
+          setQuery(address);
+          onChange({ lat: pos.lat, lng: pos.lng, address });
+        });
       }
-    };
-
-    if (value?.lat) placeMarker(new g.maps.LatLng(value.lat, value.lng));
-
-    map.addListener('click', async (e: GMaps) => {
-      if (!e.latLng) return;
-      placeMarker(e.latLng);
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      const address = await reverseGeocode(lat, lng);
+      const address = await nominatimReverse(lat, lng);
       setQuery(address);
       onChange({ lat, lng, address });
     });
 
-    setMapReady(true);
-  }, []); // eslint-disable-line
+    mapInstanceRef.current = map;
+    // Invalidate size after expand animation
+    setTimeout(() => map.invalidateSize(), 200);
+  }, [expanded]); // eslint-disable-line
 
-  useEffect(() => {
-    if (getG()?.maps) { initMap(); return; }
-    const scriptId = 'gmaps-script';
-    if (!document.getElementById(scriptId)) {
-      const s = document.createElement('script');
-      s.id = scriptId;
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_EMBED_KEY}&libraries=marker&v=weekly&loading=async`;
-      s.async = true;
-      s.onload = initMap;
-      document.head.appendChild(s);
-    } else {
-      const checkInterval = setInterval(() => {
-        if (getG()?.maps) { clearInterval(checkInterval); initMap(); }
-      }, 300);
-    }
-  }, []); // eslint-disable-line
-
+  // Sync value address to query
   useEffect(() => {
     if (value?.address && !query) setQuery(value.address);
   }, [value?.address]); // eslint-disable-line
@@ -91,21 +120,30 @@ const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onCha
     if (!q || q.length < 3) { setSuggestions([]); return; }
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
-      const results = await searchAddress(q);
+      const results = await nominatimSearch(q);
       setSuggestions(results);
       setSearching(false);
-    }, 600);
+    }, 500);
   };
 
   const selectSuggestion = (s: { label: string; lat: number; lng: number }) => {
     setQuery(s.label);
     setSuggestions([]);
     onChange({ lat: s.lat, lng: s.lng, address: s.label });
-    const g = getG();
-    if (mapInstanceRef.current && g) {
-      const pos = new g.maps.LatLng(s.lat, s.lng);
-      mapInstanceRef.current.panTo(pos);
-      mapInstanceRef.current.setZoom(15);
+    if (mapInstanceRef.current) {
+      const latlng: L.LatLngTuple = [s.lat, s.lng];
+      mapInstanceRef.current.setView(latlng, 15);
+      if (markerRef.current) {
+        markerRef.current.setLatLng(latlng);
+      } else {
+        markerRef.current = L.marker(latlng, { draggable: true }).addTo(mapInstanceRef.current);
+        markerRef.current.on('dragend', async () => {
+          const pos = markerRef.current!.getLatLng();
+          const address = await nominatimReverse(pos.lat, pos.lng);
+          setQuery(address);
+          onChange({ lat: pos.lat, lng: pos.lng, address });
+        });
+      }
     }
   };
 
@@ -113,21 +151,30 @@ const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onCha
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude: lat, longitude: lng } = pos.coords;
-      const address = await reverseGeocode(lat, lng);
+      const address = await nominatimReverse(lat, lng);
       setQuery(address);
       onChange({ lat, lng, address });
-      const g = getG();
-      if (mapInstanceRef.current && g) {
-        const gpos = new g.maps.LatLng(lat, lng);
-        mapInstanceRef.current.panTo(gpos);
-        mapInstanceRef.current.setZoom(16);
+      if (mapInstanceRef.current) {
+        const latlng: L.LatLngTuple = [lat, lng];
+        mapInstanceRef.current.setView(latlng, 16);
+        if (markerRef.current) {
+          markerRef.current.setLatLng(latlng);
+        } else {
+          markerRef.current = L.marker(latlng, { draggable: true }).addTo(mapInstanceRef.current);
+          markerRef.current.on('dragend', async () => {
+            const pos2 = markerRef.current!.getLatLng();
+            const addr = await nominatimReverse(pos2.lat, pos2.lng);
+            setQuery(addr);
+            onChange({ lat: pos2.lat, lng: pos2.lng, address: addr });
+          });
+        }
       }
     });
   };
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-      {/* Header */}
+      {/* Header toggle */}
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
@@ -140,37 +187,37 @@ const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onCha
             {value?.address || query || <span className="text-muted-foreground font-normal">Pilih lokasi...</span>}
           </p>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">{expanded ? '▲' : '▼'}</span>
+        {expanded ? <ChevronUp size={16} className="text-muted-foreground shrink-0" /> : <ChevronDown size={16} className="text-muted-foreground shrink-0" />}
       </button>
 
       {expanded && (
         <div>
-          {/* Search */}
+          {/* Search input */}
           <div className="px-3 pb-2 relative">
             <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2">
               <Search size={15} className="text-muted-foreground shrink-0" />
               <input
                 value={query}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Cari alamat..."
+                placeholder="Ketik nama jalan, kelurahan, kota..."
                 className="flex-1 text-sm bg-transparent outline-none placeholder-muted-foreground"
               />
               {query && (
-                <button onClick={() => { setQuery(''); setSuggestions([]); }} type="button">
+                <button type="button" onClick={() => { setQuery(''); setSuggestions([]); }}>
                   <X size={14} className="text-muted-foreground" />
                 </button>
               )}
             </div>
-            {/* Suggestions */}
+            {/* Suggestions dropdown */}
             {(suggestions.length > 0 || searching) && (
-              <div className="absolute left-3 right-3 top-10 z-50 bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+              <div className="absolute left-3 right-3 top-11 z-50 bg-popover border border-border rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto">
                 {searching && <p className="text-xs text-muted-foreground p-3">Mencari...</p>}
                 {suggestions.map((s, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => selectSuggestion(s)}
-                    className="w-full text-left text-sm px-4 py-2.5 hover:bg-muted border-b border-border last:border-0 transition"
+                    className="w-full text-left text-xs px-4 py-2.5 hover:bg-muted border-b border-border last:border-0 transition leading-snug"
                   >
                     {s.label}
                   </button>
@@ -179,7 +226,7 @@ const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onCha
             )}
           </div>
 
-          {/* Use my location */}
+          {/* My location */}
           <div className="px-3 pb-2">
             <button
               type="button"
@@ -190,17 +237,15 @@ const GoogleMapsPicker: React.FC<GoogleMapsPickerProps> = ({ label, value, onCha
             </button>
           </div>
 
-          {/* Map */}
-          <div ref={mapRef} className="w-full h-48 bg-muted" />
-          {!mapReady && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted text-xs text-muted-foreground">
-              Memuat peta...
-            </div>
-          )}
+          {/* Map container */}
+          <div ref={mapRef} className="w-full h-52" />
+          <p className="text-[10px] text-muted-foreground px-3 py-1.5 bg-muted/40">
+            Klik peta atau seret pin untuk atur lokasi. Peta © OpenStreetMap
+          </p>
         </div>
       )}
     </div>
   );
 };
 
-export default GoogleMapsPicker;
+export default LeafletMapPicker;

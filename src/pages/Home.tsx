@@ -38,6 +38,7 @@ const Home: React.FC = () => {
   const [greeting, setGreeting] = useState('');
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [latestProducts, setLatestProducts] = useState<MenuItem[]>([]);
+  const [topProducts, setTopProducts] = useState<MenuItem[]>([]);
   const [notifBadge, setNotifBadge] = useState(0);
 
   const [searchOpen, setSearchOpen] = useState(false);
@@ -58,10 +59,19 @@ const Home: React.FC = () => {
 
     Promise.all([getMenuItems('food'), getMenuItems('mart'), getMenuItems('cakpay')])
       .then(([food, mart, pay]) => {
-        const all = [...food, ...mart, ...pay]
+        const all = [...food, ...mart, ...pay];
+        // Terbaru: sort by created_at desc
+        const latest = [...all]
           .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
-          .slice(0, 6);
-        setLatestProducts(all);
+          .slice(0, 2);
+        setLatestProducts(latest);
+        // Terlaris: sort by price desc as proxy, exclude items already in latest
+        const latestIds = new Set(latest.map((x) => x.id));
+        const top = [...all]
+          .filter((x) => !latestIds.has(x.id))
+          .sort((a, b) => b.price - a.price)
+          .slice(0, 2);
+        setTopProducts(top);
       });
 
     setNotifBadge(unreadCount());
@@ -298,13 +308,38 @@ const Home: React.FC = () => {
         </div>
       )}
 
-      {/* Produk Terbaru */}
+      {/* Produk Terbaru - 1 baris (2 item) */}
       {latestProducts.length > 0 && (
-        <div className="px-5 mt-5 mb-4">
+        <div className="px-5 mt-5">
           <h2 className="text-base font-bold text-foreground mb-3">Produk Terbaru</h2>
           <div className="grid grid-cols-2 gap-3">
-            {latestProducts.map((p) => (
+            {latestProducts.slice(0, 2).map((p) => (
               <div key={p.id} className="bg-card rounded-2xl overflow-hidden border border-border/50 shadow-sm">
+                {p.image_url
+                  ? <img src={p.image_url} alt={p.name} className="w-full h-28 object-cover" />
+                  : <div className="w-full h-28 bg-muted grid place-items-center"><ShoppingCart size={24} className="text-muted-foreground" /></div>
+                }
+                <div className="p-3">
+                  <p className="text-xs font-bold text-foreground truncate">{p.name}</p>
+                  <p className="text-xs text-primary font-semibold mt-0.5">Rp {p.price.toLocaleString('id-ID')}</p>
+                  <span className="inline-block mt-1 text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                    {CATEGORY_LABEL[p.category] ?? p.category}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Produk Terlaris - 1 baris (2 item, sorted by price desc as proxy) */}
+      {topProducts.length > 0 && (
+        <div className="px-5 mt-5 mb-4">
+          <h2 className="text-base font-bold text-foreground mb-3">Produk Terlaris</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {topProducts.slice(0, 2).map((p) => (
+              <div key={p.id} className="bg-card rounded-2xl overflow-hidden border border-border/50 shadow-sm relative">
+                <span className="absolute top-2 left-2 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">🔥 Laris</span>
                 {p.image_url
                   ? <img src={p.image_url} alt={p.name} className="w-full h-28 object-cover" />
                   : <div className="w-full h-28 bg-muted grid place-items-center"><ShoppingCart size={24} className="text-muted-foreground" /></div>

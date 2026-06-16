@@ -111,7 +111,7 @@ Dikirim via ${settings.app_name}`;
           </div>
         )}
 
-        <button onClick={handleOrder} disabled={ordering || !selected} className="w-full flex items-center justify-center gap-2 bg-[#128C7E] hover:bg-[#075E54] text-white font-extrabold py-4 rounded-3xl shadow-lg transition active:scale-[0.98] disabled:opacity-60 mb-4">
+        <button onClick={handleOrder} disabled={ordering || !selected} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1DA851] text-white font-extrabold py-4 rounded-3xl shadow-lg transition active:scale-[0.98] disabled:opacity-60 mb-4">
           {ordering ? <Loader2 size={18} className="animate-spin" /> : <Wallet size={18} />}
           Pesan via WhatsApp
         </button>

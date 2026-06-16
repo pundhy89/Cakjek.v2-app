@@ -105,7 +105,7 @@ Dikirim via ${settings.app_name}`;
           <div className="flex justify-between text-sm mb-2"><span className="text-muted-foreground">Jarak</span><span className="font-semibold">{distance != null ? `±${distance} km` : '-'}</span></div>
           <div className="flex justify-between font-extrabold text-lg border-t border-border pt-3 mt-2"><span>Total</span><span className="text-primary">{total != null ? formatIDR(total) : '-'}</span></div>
         </div>
-        <button onClick={handleOrder} disabled={loading} className="w-full flex items-center justify-center gap-2 bg-[#128C7E] hover:bg-[#075E54] text-white font-extrabold py-4 rounded-3xl shadow-lg transition active:scale-[0.98] disabled:opacity-60">
+        <button onClick={handleOrder} disabled={loading} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1DA851] text-white font-extrabold py-4 rounded-3xl shadow-lg transition active:scale-[0.98] disabled:opacity-60">
           {loading ? <Loader2 size={18} className="animate-spin" /> : <Car size={18} />}
           Pesan via WhatsApp
         </button>
