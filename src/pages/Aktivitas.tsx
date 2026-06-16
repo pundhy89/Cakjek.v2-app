@@ -39,7 +39,7 @@ const Aktivitas: React.FC = () => {
   return (
     <div className="min-h-dvh">
       {/* Header */}
-      <div className="px-5 pt-10 pb-6" style={{ background: 'linear-gradient(135deg, hsl(221 83% 53%), hsl(250 83% 60%))' }}>
+      <div className="px-5 pt-10 pb-6" style={{ background: 'linear-gradient(135deg, hsl(320 85% 52%), hsl(280 80% 55%))' }}>
         <div className="flex items-center gap-3 text-white">
           <div className="w-10 h-10 rounded-2xl bg-white/20 grid place-items-center">
             <Activity size={20} />

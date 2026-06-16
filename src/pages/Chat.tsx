@@ -9,7 +9,7 @@ const Chat: React.FC = () => {
   return (
     <div className="min-h-dvh">
       {/* Header */}
-      <div className="px-5 pt-10 pb-6" style={{ background: 'linear-gradient(135deg, #128C7E, #075E54)' }}>
+      <div className="px-5 pt-10 pb-6" style={{ background: 'linear-gradient(135deg, #00C853, #00897B)' }}>
         <div className="flex items-center gap-3 text-white">
           <div className="w-10 h-10 rounded-2xl bg-white/20 grid place-items-center">
             <MessageCircle size={20} />
@@ -24,8 +24,8 @@ const Chat: React.FC = () => {
       <div className="px-4 py-6 space-y-4">
         {/* Main CTA */}
         <div className="bg-card rounded-3xl p-6 shadow-sm border border-border/50 flex flex-col items-center gap-4 text-center">
-          <div className="w-20 h-20 rounded-3xl bg-[#128C7E]/10 grid place-items-center">
-            <MessageCircle size={36} className="text-[#128C7E]" />
+          <div className="w-20 h-20 rounded-3xl bg-[#00C853]/10 grid place-items-center">
+            <MessageCircle size={36} className="text-[#00C853]" />
           </div>
           <div>
             <h2 className="text-lg font-extrabold text-foreground text-balance">Butuh Bantuan?</h2>
@@ -37,7 +37,7 @@ const Chat: React.FC = () => {
             href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-[#128C7E] hover:bg-[#075E54] text-white font-bold py-4 rounded-2xl transition active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 bg-[#00C853] hover:bg-[#00897B] text-white font-bold py-4 rounded-2xl transition active:scale-[0.98]"
           >
             <ExternalLink size={18} /> Buka WhatsApp
           </a>
@@ -60,8 +60,8 @@ const Chat: React.FC = () => {
 
         {/* Contact */}
         <div className="bg-card rounded-2xl p-4 shadow-sm border border-border/50 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#128C7E]/10 grid place-items-center shrink-0">
-            <Phone size={18} className="text-[#128C7E]" />
+          <div className="w-10 h-10 rounded-full bg-[#00C853]/10 grid place-items-center shrink-0">
+            <Phone size={18} className="text-[#00C853]" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Nomor WhatsApp</p>

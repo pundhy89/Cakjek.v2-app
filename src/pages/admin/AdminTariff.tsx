@@ -8,6 +8,7 @@ const SERVICES: { key: Tariff['service']; label: string; emoji: string; color: s
   { key: 'cakride', label: 'CakRide (Ojek)', emoji: '🛵', color: 'from-orange-400 to-orange-600' },
   { key: 'cakcar', label: 'CakCar (Taxi)', emoji: '🚗', color: 'from-blue-400 to-blue-600' },
   { key: 'caksend', label: 'CakSend (Kurir)', emoji: '📦', color: 'from-amber-400 to-amber-600' },
+  { key: 'cakfood', label: 'CakFood (Pesan Makan)', emoji: '🍴', color: 'from-rose-400 to-rose-600' },
   { key: 'cakmart', label: 'CakMart (Ongkir Belanja)', emoji: '🛒', color: 'from-emerald-400 to-emerald-600', flatRate: true },
   { key: 'caklangganan', label: 'CakLangganan (Paket Bulanan)', emoji: '🗓', color: 'from-purple-400 to-purple-600', flatRate: true },
 ];

@@ -1,10 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { Save, Loader2, RefreshCw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Save, Loader2 } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import ImageInput from '@/components/ImageInput';
 import { getSettings, updateSettings, formatIDR } from '@/lib/api';
 import { useApp } from '@/contexts/AppContext';
 import type { AppSettings } from '@/types/index';
 import { toast } from 'sonner';
+
+// Fix Leaflet default icons
+const DefaultIcon = L.icon({
+  iconUrl: markerIconUrl, iconRetinaUrl: markerIcon2xUrl, shadowUrl: markerShadowUrl,
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+/** Mini map for picking service center lat/lng */
+const CenterMapPicker: React.FC<{
+  lat: number; lng: number;
+  onChange: (lat: number, lng: number) => void;
+}> = ({ lat, lng, onChange }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstRef.current) return;
+    const map = L.map(mapRef.current, { zoomControl: true }).setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19,
+    }).addTo(map);
+
+    const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker.on('dragend', () => {
+      const p = marker.getLatLng();
+      onChange(parseFloat(p.lat.toFixed(6)), parseFloat(p.lng.toFixed(6)));
+    });
+    markerRef.current = marker;
+
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      const { lat: la, lng: ln } = e.latlng;
+      marker.setLatLng([la, ln]);
+      onChange(parseFloat(la.toFixed(6)), parseFloat(ln.toFixed(6)));
+    });
+
+    mapInstRef.current = map;
+    setTimeout(() => map.invalidateSize(), 100);
+  }, []); // eslint-disable-line
+
+  // Keep marker in sync when inputs change externally
+  useEffect(() => {
+    if (!mapInstRef.current || !markerRef.current) return;
+    markerRef.current.setLatLng([lat, lng]);
+    mapInstRef.current.setView([lat, lng], mapInstRef.current.getZoom());
+  }, [lat, lng]);
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border">
+      <div ref={mapRef} className="w-full h-48" />
+      <p className="text-[10px] text-muted-foreground bg-muted/40 px-3 py-1.5">
+        Klik peta atau seret pin untuk mengubah titik pusat area servis. © OpenStreetMap
+      </p>
+    </div>
+  );
+};
 
 const AdminSettings: React.FC = () => {
   const { reloadSettings } = useApp();
@@ -63,6 +125,12 @@ const AdminSettings: React.FC = () => {
 
         {/* Service area */}
         <Section title="Area Servis">
+          {/* Map picker for center point */}
+          <CenterMapPicker
+            lat={form.service_center_lat}
+            lng={form.service_center_lng}
+            onChange={(la, ln) => { setF('service_center_lat', la); setF('service_center_lng', ln); }}
+          />
           <div className="grid grid-cols-2 gap-3">
             <FF label="Latitude Pusat">
               <input type="number" step="0.0001" value={form.service_center_lat} onChange={(e) => setF('service_center_lat', Number(e.target.value))} className="input-field" />

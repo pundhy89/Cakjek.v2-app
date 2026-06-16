@@ -57,7 +57,7 @@ export interface MenuItem {
 
 export interface Tariff {
   id: string;
-  service: 'cakride' | 'cakcar' | 'caksend' | 'cakmart' | 'caklangganan';
+  service: 'cakride' | 'cakcar' | 'caksend' | 'cakmart' | 'caklangganan' | 'cakfood';
   base_fare: number;
   per_km: number;
   label: string;

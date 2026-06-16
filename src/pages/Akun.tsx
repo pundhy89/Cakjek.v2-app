@@ -24,7 +24,7 @@ const Akun: React.FC = () => {
   return (
     <div className="min-h-dvh">
       {/* Header */}
-      <div className="px-5 pt-10 pb-14 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(221 83% 53%), hsl(250 83% 60%))' }}>
+      <div className="px-5 pt-10 pb-14 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(0 80% 52%), hsl(350 75% 45%))' }}>
         <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
         <div className="flex items-center gap-4 relative z-10 text-white">
           <div className="w-16 h-16 rounded-3xl bg-white/25 backdrop-blur grid place-items-center shadow-lg text-2xl font-black border-2 border-white/30">
