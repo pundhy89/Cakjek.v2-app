@@ -190,7 +190,7 @@ export async function getTariff(service: string): Promise<Tariff | null> {
 }
 
 export async function upsertTariff(service: string, t: Partial<Tariff>): Promise<void> {
-  await supabase.from('tariffs').upsert({ service, ...t });
+  await supabase.from('tariffs').upsert({ service, ...t }, { onConflict: 'service' });
 }
 
 // ---- Orders ----

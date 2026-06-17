@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Navigation, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Coords } from '@/types/index';
 
 // Fix default marker icons for Leaflet bundled with Vite
@@ -148,28 +148,7 @@ const LeafletMapPicker: React.FC<LeafletMapPickerProps> = ({ label, value, onCha
   };
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      const address = await nominatimReverse(lat, lng);
-      setQuery(address);
-      onChange({ lat, lng, address });
-      if (mapInstanceRef.current) {
-        const latlng: L.LatLngTuple = [lat, lng];
-        mapInstanceRef.current.setView(latlng, 16);
-        if (markerRef.current) {
-          markerRef.current.setLatLng(latlng);
-        } else {
-          markerRef.current = L.marker(latlng, { draggable: true }).addTo(mapInstanceRef.current);
-          markerRef.current.on('dragend', async () => {
-            const pos2 = markerRef.current!.getLatLng();
-            const addr = await nominatimReverse(pos2.lat, pos2.lng);
-            setQuery(addr);
-            onChange({ lat: pos2.lat, lng: pos2.lng, address: addr });
-          });
-        }
-      }
-    });
+    // Geolocation removed — gunakan pencarian alamat atau klik langsung di peta
   };
 
   return (
@@ -224,17 +203,6 @@ const LeafletMapPicker: React.FC<LeafletMapPickerProps> = ({ label, value, onCha
                 ))}
               </div>
             )}
-          </div>
-
-          {/* My location */}
-          <div className="px-3 pb-2">
-            <button
-              type="button"
-              onClick={useMyLocation}
-              className="flex items-center gap-2 text-xs text-primary font-semibold hover:underline"
-            >
-              <Navigation size={13} /> Gunakan Lokasi Saya
-            </button>
           </div>
 
           {/* Map container */}
