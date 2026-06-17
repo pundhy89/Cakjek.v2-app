@@ -87,6 +87,7 @@ export async function getSettings(): Promise<AppSettings> {
     return {
       id: 'settings', app_name: 'CakJek', logo_url: '', whatsapp_number: '6285233962821',
       service_center_lat: -7.2575, service_center_lng: 112.7521, service_radius_km: 20, mart_delivery_fee: 7000,
+      admin_username: 'admin', admin_password: 'admin',
     };
   }
   return data as AppSettings;
@@ -318,6 +319,15 @@ export async function deleteVehicle(id: number): Promise<void> {
   if (error) throw new Error(error.message);
 }
 const ADMIN_TOKEN_KEY = 'cakjek_admin_token';
+
+export async function adminLoginAsync(username: string, password: string): Promise<boolean> {
+  const settings = await getSettings();
+  const ok = username === settings.admin_username && password === settings.admin_password;
+  if (ok) localStorage.setItem(ADMIN_TOKEN_KEY, 'cakjek_admin_authenticated');
+  return ok;
+}
+
+// legacy sync kept for non-async callers — use adminLoginAsync instead
 export function adminLogin(username: string, password: string): boolean {
   if (username === 'admin' && password === 'admin') {
     localStorage.setItem(ADMIN_TOKEN_KEY, 'cakjek_admin_authenticated');
@@ -328,6 +338,14 @@ export function adminLogin(username: string, password: string): boolean {
 export function adminLogout() { localStorage.removeItem(ADMIN_TOKEN_KEY); }
 export function isAdminLoggedIn(): boolean {
   return localStorage.getItem(ADMIN_TOKEN_KEY) === 'cakjek_admin_authenticated';
+}
+
+export async function updateAdminCredentials(username: string, password: string): Promise<void> {
+  const { error } = await supabase
+    .from('settings')
+    .update({ admin_username: username, admin_password: password })
+    .eq('id', 'settings');
+  if (error) throw new Error(error.message);
 }
 
 // ---- WhatsApp URL builder ----

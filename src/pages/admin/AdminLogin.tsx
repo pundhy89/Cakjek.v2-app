@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
-import { adminLogin } from '@/lib/api';
+import { adminLoginAsync } from '@/lib/api';
 import { toast } from 'sonner';
 
 const AdminLogin: React.FC = () => {
@@ -14,12 +14,11 @@ const AdminLogin: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      const ok = adminLogin(username, password);
-      setLoading(false);
+    try {
+      const ok = await adminLoginAsync(username, password);
       if (ok) { nav('/admin', { replace: true }); }
       else { toast.error('Username atau password salah'); }
-    }, 600);
+    } finally { setLoading(false); }
   };
 
   return (

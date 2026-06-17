@@ -14,6 +14,8 @@ export interface AppSettings {
   service_center_lng: number;
   service_radius_km: number;
   mart_delivery_fee: number;
+  admin_username: string;
+  admin_password: string;
 }
 
 export interface Banner {

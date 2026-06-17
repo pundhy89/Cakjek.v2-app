@@ -16,6 +16,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   service_center_lng: 112.7521,
   service_radius_km: 20,
   mart_delivery_fee: 7000,
+  admin_username: 'admin',
+  admin_password: 'admin',
 };
 
 const AppContext = createContext<AppContextValue>({
