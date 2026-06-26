@@ -24,7 +24,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 ```
 
-**STRICTLY FORBIDDEN**: AsyncStorage for business data; Web storage APIs (`localStorage` / `sessionStorage`).
+### Auth Session strategy (edit the client config, do NOT recreate the file)
+
+The client file is pre-built — make **targeted edits** to it (the `auth` options, and for anonymous apps the top-level `localStorage` import); never recreate `src/client/supabase.ts`.
+
+- **App with login** (uses the `login` skill): keep the defaults above (`persistSession: true`, `autoRefreshToken: true`, `storage: localStorage`).
+- **Anonymous App** (NO Supabase auth session at all — uses only the anon key plus a self-managed `device_id`, never calls `signInAnonymously` / `signIn*`): MUST set `persistSession: false` and `autoRefreshToken: false`, and **remove** `storage: localStorage` plus the top-level `import 'expo-sqlite/localStorage/install'`. Always use the anon key.
+  - **WHY**: the Web preview is same-origin, so a persisted `localStorage` session is shared across different generated apps ("串号"). A stale session token then fails signature verification (`signature verification failed`, 400/403). A stateless anon client avoids this entirely.
+  - **CAVEAT**: if the app DOES call `signInAnonymously()` and ties data to `auth.uid()` via RLS, keep `persistSession: true` — disabling it would mint a new anonymous user on every reload and orphan the prior user's data.
+
+**STRICTLY FORBIDDEN**: AsyncStorage for business data; Web storage APIs (`localStorage` / `sessionStorage`) **for business-data persistence** (auth session storage and platform-fallback storage are exempt — see the platform fallback rules in `mobile-app`).
 
 ## Environment Variables
 
@@ -65,16 +74,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 ```tsx
 import { fetch } from "expo/fetch";
 
-const uploadFile = async (uri: string, bucket: string, path: string, mimeType = "image/jpeg") => {
+const uploadFile = async (uri: string, bucket: string, path: string, mimeType: string) => {
   const response = await fetch(uri);
   const arrayBuffer = await response.arrayBuffer();
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(path, arrayBuffer, { contentType: mimeType });
-  return { data, error };
+  if (error) throw new Error(error.message); // never swallow — surface it
+  return data;
 };
 ```
 
+- `contentType` correctness (a wrong MIME → **415** rejection):
+  - **Images**: compress to JPEG first via `expo-image-manipulator` (see the `mobile-app` skill), then upload with `contentType: "image/jpeg"` — the compressed output is always JPEG.
+  - **Other file types**: pass the picker's `asset.mimeType`.
+  - NEVER derive the MIME by slicing the file extension off the URI — on Web the picker yields `blob:` / `data:` URIs with no usable extension, producing an invalid MIME. Use `image/jpeg`, never the non-standard `image/jpg`.
+- MUST check `error` and throw `error.message` — never swallow the upload error.
+- Debugging `signature verification failed`: first reproduce with the anon key via `curl` to isolate "wrong token sent" from a missing bucket / RLS / wrong key.
 - Do **not** use `FileReader`, `blob`, or `base64` for uploads
 - Frontend validation: 1MB limit, snake_case filenames
 - Compress before uploading using `expo-image-manipulator`
