@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run build || yarn build || pnpm build || echo 'No build step'",
-  "outputDirectory": "dist",
-  "framework": "vite"
+  "installCommand": "cd frontend && NPM_CONFIG_PRODUCTION=false npm ci",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/build",
+  "framework": "create-react-app"
 }
